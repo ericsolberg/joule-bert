@@ -1,0 +1,40 @@
+:root {
+  --joule-bg: #0A0A1A;
+  --joule-tile-off: #1E1E3A;
+  --joule-tile-activating: #6B4FBB;
+  --joule-tile-on: #A78BFA;
+  --joule-tile-frozen: #4B5563;
+  --joule-tile-corrupt: #F97316;
+  --joule-player: #8B5CF6;
+  --joule-glow: #C4B5FD;
+  --joule-text: #F5F3FF;
+  --joule-accent: #2DD4BF;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: var(--joule-bg);
+  color: var(--joule-text);
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.app-root {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
