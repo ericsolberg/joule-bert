@@ -61,11 +61,13 @@ export function StartScreen({ onStart, hiScore }: StartScreenProps) {
       </div>
 
       <div style={{ position: 'relative', zIndex: 2, textAlign: 'center' }}>
-        <svg width="80" height="100" viewBox="0 0 80 100" style={{ marginBottom: '16px', filter: 'drop-shadow(0 0 24px #8B5CF6)' }}>
-          <polygon points="40,0 74,20 74,56 40,100 6,56 6,20" fill="#8B5CF6" stroke="#C4B5FD" strokeWidth="1.5" />
-          <polygon points="40,0 64,26 40,36 16,26" fill="#C4B5FD" opacity="0.45" />
-          <polygon points="40,0 54,14 40,20 26,14" fill="white" opacity="0.3" />
-        </svg>
+        <img
+          src="/joule.png"
+          alt="Joule"
+          width={82}
+          height={100}
+          style={{ marginBottom: '16px', filter: 'drop-shadow(0 0 24px #8B5CF6)' }}
+        />
 
         <h1 style={{
           fontFamily: 'system-ui, sans-serif',
@@ -77,7 +79,7 @@ export function StartScreen({ onStart, hiScore }: StartScreenProps) {
           marginBottom: '8px',
           lineHeight: 1,
         }}>
-          JOULE-BERT
+          JOULE*BERT
         </h1>
 
         <p style={{
