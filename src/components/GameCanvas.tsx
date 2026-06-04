@@ -46,6 +46,14 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
     tileImageRef.current = img;
   }, []);
 
+  // Joule character image
+  const jouleImageRef = useRef<HTMLImageElement | null>(null);
+  useEffect(() => {
+    const img = new Image();
+    img.src = '/joule.png';
+    jouleImageRef.current = img;
+  }, []);
+
   const { consumeDirection, consumePause } = useGameInput();
   const [phase, setPhase] = useState<GamePhase>(GamePhase.LevelIntro);
 
@@ -163,7 +171,7 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
 
     if (state.phase !== GamePhase.LevelIntro || state.introProgress >= 1) {
       const playerPos = getPlayerScreenPos(state.player, originX, originY, tileW, tileH, tileD, TILE_GAP);
-      drawPlayer(ctx, state.player, playerPos.x, playerPos.y, now, reduceMotion);
+      drawPlayer(ctx, state.player, playerPos.x, playerPos.y, now, reduceMotion, jouleImageRef.current);
     }
 
     if (state.phase === GamePhase.LevelClear) {

@@ -9,7 +9,8 @@ export function drawPlayer(
   screenX: number,
   screenY: number,
   now: number,
-  reduceMotion: boolean
+  reduceMotion: boolean,
+  jouleImage: HTMLImageElement | null = null
 ) {
   if (player.animState === 'dead') {
     drawDeathAnim(ctx, player, screenX, screenY);
@@ -29,16 +30,27 @@ export function drawPlayer(
     const scale = 1 + 0.2 * Math.sin(player.victoryProgress * Math.PI * 3);
     ctx.rotate(spin);
     ctx.scale(scale, scale);
-    drawGem(ctx, 0, 0);
+    drawGem(ctx, 0, 0, jouleImage);
     ctx.restore();
     return;
   }
 
-  drawGem(ctx, screenX, drawY - 18);
+  drawGem(ctx, screenX, drawY - 18, jouleImage);
 }
 
-function drawGem(ctx: CanvasRenderingContext2D, cx: number, cy: number) {
+function drawGem(ctx: CanvasRenderingContext2D, cx: number, cy: number, jouleImage: HTMLImageElement | null = null) {
   const size = 18;
+
+  if (jouleImage && jouleImage.complete && jouleImage.naturalWidth > 0) {
+    const imgSize = size * 4.0;
+    ctx.save();
+    //ctx.shadowBlur = 16;
+    ctx.shadowColor = '#8B5CF6';
+    ctx.drawImage(jouleImage, cx - imgSize / 2, cy - imgSize / 2, imgSize, imgSize);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+    return;
+  }
 
   ctx.save();
 
