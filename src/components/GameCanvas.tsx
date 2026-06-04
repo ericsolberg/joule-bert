@@ -1,4 +1,5 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
+import { soundManager } from '../audio/soundManager';
 import type { GameState } from '../game/engine/gameState';
 import { GamePhase, createInitialGameState } from '../game/engine/gameState';
 import { updateGame } from '../game/engine/gameUpdate';
@@ -54,6 +55,17 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
     jouleImageRef.current = img;
   }, []);
 
+  // Preload sounds and play level-start for the first level
+  useEffect(() => {
+    Promise.all([
+      soundManager.load('jump', '/jump.mp3'),
+      soundManager.load('level-start', '/level-start.mp3'),
+      soundManager.load('victory', '/victory.mp3'),
+      soundManager.load('fall', '/fall.mp3'),
+      soundManager.load('game-over', '/game-over.mp3'),
+    ]).then(() => soundManager.play('level-start'));
+  }, []);
+
   const { consumeDirection, consumePause } = useGameInput();
   const [phase, setPhase] = useState<GamePhase>(GamePhase.LevelIntro);
 
@@ -75,13 +87,27 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
     const newState = updateGame(state, deltaMs, now, dir);
     stateRef.current = newState;
 
+    if (newState.player.isHopping && !state.player.isHopping) {
+      soundManager.play('jump');
+    }
+    if (newState.player.animState === 'dead' && state.player.animState !== 'dead') {
+      soundManager.play('fall');
+    }
+
     if (newState.score > hiScore) {
       onHiScoreUpdate(newState.score);
     }
 
     if (newState.phase !== state.phase) {
       setPhase(newState.phase);
+      if (newState.phase === GamePhase.LevelIntro) {
+        soundManager.play('level-start');
+      }
+      if (newState.phase === GamePhase.LevelClear) {
+        soundManager.play('victory');
+      }
       if (newState.phase === GamePhase.GameOver) {
+        soundManager.play('game-over');
         onGameOver(newState.score);
       }
     }

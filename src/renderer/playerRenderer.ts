@@ -42,11 +42,12 @@ function drawGem(ctx: CanvasRenderingContext2D, cx: number, cy: number, jouleIma
   const size = 18;
 
   if (jouleImage && jouleImage.complete && jouleImage.naturalWidth > 0) {
-    const imgSize = size * 4.0;
+    const imgH = size * 4.0;
+    const imgW = imgH * 0.82
     ctx.save();
     //ctx.shadowBlur = 16;
     ctx.shadowColor = '#8B5CF6';
-    ctx.drawImage(jouleImage, cx - imgSize / 2, cy - imgSize / 2, imgSize, imgSize);
+    ctx.drawImage(jouleImage, cx - imgW / 2, cy - imgH / 2, imgW, imgH);
     ctx.shadowBlur = 0;
     ctx.restore();
     return;

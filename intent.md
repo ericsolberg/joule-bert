@@ -1,14 +1,14 @@
-# Joule-Bert: Intent Document
+# Joule\*Bert: Intent Document
 
 ## Overview
 
-**Joule-Bert** is a browser-based React game — a love letter to the classic Q*Bert arcade game, reimagined for the SAP Joule / Joule Studio team as an easter egg. It takes the iconic isometric pyramid gameplay and skins it entirely in the visual language of SAP's Joule Business AI Platform.
+**Joule\*Bert** is a browser-based React game — a love letter to the classic Q*Bert arcade game, reimagined for the SAP Joule / Joule Studio team as an easter egg. It takes the iconic isometric pyramid gameplay and skins it entirely in the visual language of SAP's Joule Business AI Platform.
 
 ---
 
 ## Concept
 
-The classic Q*Bert formula: hop around an isometric pyramid of cubes, land on each cube to change its color, avoid enemies, and clear every cube to advance. Joule-Bert keeps that loop intact but replaces every visual element with characters and metaphors from the SAP agentic AI world.
+The classic Q*Bert formula: hop around an isometric pyramid of cubes, land on each cube to change its color, avoid enemies, and clear every cube to advance. Joule\*Bert keeps that loop intact but replaces every visual element with characters and metaphors from the SAP agentic AI world.
 
 ---
 
@@ -25,7 +25,7 @@ The game world is inspired by the layered isometric 3D landscape from the SAP Bu
 
 ## Characters
 
-### Joule-Bert (the Player)
+### Joule\*Bert (the Player)
 - **Visual**: The Joule "Jewel" — the faceted purple/blue gemstone from the center of the SAP Business AI Platform diagram
 - **Movement**: Bounces diagonally between tiles in the classic Q*Bert hop style
 - **Personality**: Brings intelligence and clarity to chaos (the enterprise)
@@ -37,7 +37,7 @@ A cast of whimsical antagonists representing the real-world obstacles that haunt
 |---|---|---|
 | **The Hallucinator** | LLM hallucination / confabulation | Wanders randomly, leaves false color trails on tiles |
 | **The Data Silo** | Disconnected enterprise data sources | Slow-moving blocker that reverses tile progress |
-| **The Compliance Troll** | Overzealous governance/compliance friction | Chases Joule-Bert, freezes tiles on contact |
+| **The Compliance Troll** | Overzealous governance/compliance friction | Chases Joule\*Bert, freezes tiles on contact |
 | **The Legacy Goblin** | Outdated legacy system dependencies | Predictable patrol path, very hard to kill |
 | **The Context Gremlin** | Lost context / short memory in agents | Bounces erratically, resets tile colors randomly |
 
@@ -48,8 +48,8 @@ A cast of whimsical antagonists representing the real-world obstacles that haunt
 - **Objective**: Hop on every tile in the pyramid to change it to the "Joule activated" color. Clear all tiles to complete the level.
 - **Lives**: 3 lives (represented by 3 small Joule jewel icons)
 - **Hazard**: Falling off the edge of the pyramid ends a life (just like Q*Bert)
-- **Discs**: Floating "escape pods" on the sides of the pyramid let Joule-Bert jump to safety — styled as SAP BTP (Business Technology Platform) cloud nodes
-- **Coily equivalent**: A snake-like enemy (the **Dependency Chain**) that uncoils and chases Joule-Bert specifically
+- **Discs**: Floating "escape pods" on the sides of the pyramid let Joule\*Bert jump to safety — styled as SAP BTP (Business Technology Platform) cloud nodes
+- **Coily equivalent**: A snake-like enemy (the **Dependency Chain**) that uncoils and chases Joul\*Bert specifically
 - **Score**: Points for each tile activated, bonus for clearing the board without dying
 
 ---

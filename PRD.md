@@ -1,4 +1,4 @@
-# Joule-Bert — Product Requirements Document
+# Joule\*Bert — Product Requirements Document
 
 **Version**: 1.0  
 **Date**: 2026-05-28  
@@ -9,9 +9,9 @@
 
 ## 1. Purpose & Context
 
-Joule-Bert is a browser-based easter egg game for the SAP Joule Studio team. It is a faithful clone of the 1982 Q*Bert arcade game, fully re-skinned in the visual and conceptual language of SAP's Joule Business AI Platform. The game is meant to be discovered — embedded in an internal tool, shared as a URL, or slipped into a Joule Studio demo — and playable instantly in any modern browser with no install.
+Joule\*Bert is a browser-based easter egg game for the SAP Joule Studio team. It is a faithful clone of the 1982 Q*Bert arcade game, fully re-skinned in the visual and conceptual language of SAP's Joule Business AI Platform. The game is meant to be discovered — embedded in an internal tool, shared as a URL, or slipped into a Joule Studio demo — and playable instantly in any modern browser with no install.
 
-The name is a portmanteau of **Joule** (SAP's AI assistant and the platform context) and **Q*Bert** (the source game). The star glyph is preserved: **Joule-Bert** is always written with a hyphen.
+The name is a portmanteau of **Joule** (SAP's AI assistant and the platform context) and **Q*Bert** (the source game). The star glyph is preserved: **Joule\*Bert** is always written with a hyphen.
 
 ---
 
@@ -36,7 +36,7 @@ The name is a portmanteau of **Joule** (SAP's AI assistant and the platform cont
 
 ## 3. Source Game Reference: Q*Bert
 
-Understanding the original mechanics is essential for building Joule-Bert faithfully.
+Understanding the original mechanics is essential for building Joule\*Bert faithfully.
 
 ### 3.1 Board
 Q*Bert is played on an isometric pyramid of cubes arranged in a triangular grid. The standard board has **7 rows** (row 1 at the top with 1 cube, row 7 at the bottom with 7 cubes), for a total of **28 cubes**. The pyramid floats in black space.
@@ -90,7 +90,7 @@ Game over when all lives are exhausted. Between lives, a brief death animation p
 
 ---
 
-## 4. Joule-Bert Game Design
+## 4. Joule\*Bert Game Design
 
 ### 4.1 Board — The Joule Platform Pyramid
 
@@ -129,7 +129,7 @@ Two floating tiles appear at fixed positions on the left and right flanks of the
 
 ---
 
-### 4.2 Player Character — Joule-Bert
+### 4.2 Player Character — Joule\*Bert
 
 **Visual description**: A faceted gemstone — specifically a diamond/brilliant cut viewed from a 3/4 isometric angle. Uses the Joule brand jewel as reference: deep purple-to-blue gradient fill, bright specular highlight on the top facet, subtle violet glow/bloom around the base. Approximately 60% of tile width in size.
 
@@ -178,9 +178,9 @@ All enemies spawn at or near the top of the pyramid and move downward on a timer
 - **Represents**: Overzealous governance and compliance friction
 - **Visual**: A squat, stern-faced bureaucrat figure in a hard hat, carrying a giant red stamp ("BLOCKED"). Renders as a cartoon character in the Joule color palette.
 - **Color**: Red (`#DC2626`) accent on the stamp, navy suit
-- **Behavior**: **Actively chases Joule-Bert** — on each tick, calculates the direction that reduces Manhattan distance to the player and moves that way. If two directions are equally good, picks randomly between them.
+- **Behavior**: **Actively chases Joule\*Bert** — on each tick, calculates the direction that reduces Manhattan distance to the player and moves that way. If two directions are equally good, picks randomly between them.
 - **Effect on tiles**: When The Compliance Troll lands on a tile, it **freezes** it (Frozen state) for 5 seconds. Frozen tiles cannot be activated until they thaw.
-- **Speed**: Moves at 0.8× Joule-Bert's hop interval
+- **Speed**: Moves at 0.8× Joule\*Bert's hop interval
 - **Introduced**: Level 2
 
 #### 4.3.4 The Legacy Goblin
@@ -204,8 +204,8 @@ All enemies spawn at or near the top of the pyramid and move downward on a timer
 - **Represents**: Cascading dependency failures in distributed systems
 - **Visual**: A chain of interlocked chain-link icons that grows as it descends — starts as 1 link at the top, grows to 5 links. Rendered as a sinuous line of metallic chain links.
 - **Color**: Gunmetal grey with orange rust highlights
-- **Behavior**: Begins coiled at the top and **uncoils**, hopping down one link at a time. Once fully uncoiled (all 5 links on the board), it **locks on to Joule-Bert** and chases aggressively (same algorithm as Compliance Troll but at 1.0× player speed — unavoidable without an escape node).
-- **Special mechanic**: If Joule-Bert uses a BTP Cloud Node (escape disc) while The Dependency Chain is on an adjacent tile, The Dependency Chain follows the jump and **falls off the board**, scoring **500 bonus points**. This is the primary high-score mechanic.
+- **Behavior**: Begins coiled at the top and **uncoils**, hopping down one link at a time. Once fully uncoiled (all 5 links on the board), it **locks on to Joule\*Bert** and chases aggressively (same algorithm as Compliance Troll but at 1.0× player speed — unavoidable without an escape node).
+- **Special mechanic**: If Joule\*Bert uses a BTP Cloud Node (escape disc) while The Dependency Chain is on an adjacent tile, The Dependency Chain follows the jump and **falls off the board**, scoring **500 bonus points**. This is the primary high-score mechanic.
 - **Introduced**: Level 4 (one per level from level 4 onward)
 
 ---
@@ -247,8 +247,8 @@ All movement uses a **discrete hop model** — characters are either resting on 
 
 | Parameter | Value |
 |---|---|
-| Joule-Bert hop duration | 180 ms |
-| Joule-Bert hop arc height | 40 px above tile midpoint |
+| Joule\*Bert hop duration | 180 ms |
+| Joule\*Bert hop arc height | 40 px above tile midpoint |
 | Enemy base tick interval | 600 ms (time between enemy hops) |
 | Compliance Troll tick interval | 750 ms (slightly slower than player max cadence) |
 | Dependency Chain tick (locked-on) | 600 ms |
@@ -276,8 +276,8 @@ Enemy tick intervals decrease with level number: `tickInterval = baseInterval ×
 #### Level Start Sequence
 1. Board assembles tile-by-tile from top to bottom with a staggered cascade animation (each row fades in 80 ms after the previous)
 2. "LEVEL X" text displays for 1.5 seconds in large Joule-brand typography
-3. Joule-Bert appears at the top tile with the idle bob animation
-4. Enemies appear at the top with a 2-second stagger (they do not begin moving until Joule-Bert's first input)
+3. Joule\*Bert appears at the top tile with the idle bob animation
+4. Enemies appear at the top with a 2-second stagger (they do not begin moving until Joule\*Bert's first input)
 
 #### Level Clear Sequence
 1. All tiles pulse with a bright full-board victory flash (300 ms)
@@ -329,7 +329,7 @@ Enemy tick intervals decrease with level number: `tickInterval = baseInterval ×
 | `--joule-tile-on` | `#A78BFA` | Activated tile top face |
 | `--joule-tile-frozen` | `#4B5563` | Frozen tile |
 | `--joule-tile-corrupt` | `#F97316` | Corrupted tile |
-| `--joule-player` | `#8B5CF6` | Joule-Bert base color |
+| `--joule-player` | `#8B5CF6` | Joule\*Bert base color |
 | `--joule-glow` | `#C4B5FD` | Glow/bloom color |
 | `--joule-text` | `#F5F3FF` | UI text |
 | `--joule-accent` | `#2DD4BF` | Teal accent (BTP nodes, special effects) |
@@ -360,7 +360,7 @@ Board origin (`originX`, `originY`) is calculated to center the pyramid in the c
 
 Characters are rendered as **canvas draw calls** (not sprites) to keep the bundle small. Each character is a `draw(ctx, x, y, animState)` function that uses canvas path/arc/bezier primitives.
 
-Joule-Bert specifically: drawn as a multi-faceted polygon with gradient fill to simulate the gemstone facets. Six visible faces: top (brightest), four side facets (gradient from `--joule-player` to darker), and a subtle base shadow ellipse.
+Joule\*Bert specifically: drawn as a multi-faceted polygon with gradient fill to simulate the gemstone facets. Six visible faces: top (brightest), four side facets (gradient from `--joule-player` to darker), and a subtle base shadow ellipse.
 
 ---
 
@@ -389,7 +389,7 @@ src/
       physics.ts        # Hop arc calculations, collision detection
       scoring.ts        # Score rules
     entities/
-      player.ts         # Joule-Bert state + movement logic
+      player.ts         # Joule\*Bert state + movement logic
       enemies/
         hallucinator.ts
         dataSilo.ts
@@ -403,7 +403,7 @@ src/
       levelManager.ts   # Level progression state machine
   renderer/
     boardRenderer.ts    # Canvas draw: tiles
-    playerRenderer.ts   # Canvas draw: Joule-Bert
+    playerRenderer.ts   # Canvas draw: Joule\*Bert
     enemyRenderer.ts    # Canvas draw: all enemy types
     effectRenderer.ts   # Canvas draw: particles, glows, tile pulses
     hudRenderer.ts      # React component: score, lives, level

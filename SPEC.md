@@ -1,4 +1,4 @@
-# Joule-Bert — Implementation Specification
+# Joule\*Bert — Implementation Specification
 
 **Version**: 1.0  
 **Date**: 2026-05-28  
@@ -574,7 +574,7 @@ function drawPlayer(
 ): void
 ```
 
-**Gemstone shape** (Joule-Bert):
+**Gemstone shape** (Joule\*Bert):
 1. Draw a base shadow ellipse at `screenY + 2` (semi-transparent black).
 2. Draw the gem as an octagon approximation: top point, upper-left/right facets, widest mid-points, lower-left/right facets, bottom point.
 3. Fill top facet with `#C4B5FD` (bright highlight).
