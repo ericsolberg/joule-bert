@@ -10,10 +10,11 @@ export function drawBonusItems(
   now: number,
   tileW = 64,
   tileH = 32,
-  tileD = 20
+  tileD = 20,
+  gap = 0
 ) {
   for (const item of items) {
-    const { x, y } = tileToScreen(item.row, item.col, originX, originY, tileW, tileH, tileD);
+    const { x, y } = tileToScreen(item.row, item.col, originX, originY, tileW, tileH, tileD, gap);
     const drawY = y + tileH / 2 - 20 + Math.sin(now / 400) * 3;
 
     const lifeLeft = (item.expiresAt - now) / 5000;

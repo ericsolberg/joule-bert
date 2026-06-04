@@ -12,11 +12,12 @@ export function drawEnemy(
   now: number,
   tileW = 64,
   tileH = 32,
-  tileD = 20
+  tileD = 20,
+  gap = 0
 ) {
   if (!enemy.alive) return;
 
-  const pos = getEnemyScreenPos(enemy, originX, originY, tileW, tileH, tileD);
+  const pos = getEnemyScreenPos(enemy, originX, originY, tileW, tileH, tileD, gap);
 
   switch (enemy.type) {
     case EnemyType.Hallucinator:
@@ -35,7 +36,7 @@ export function drawEnemy(
       drawContextGremlin(ctx, pos.x, pos.y, now);
       break;
     case EnemyType.DependencyChain:
-      drawDependencyChain(ctx, enemy as DependencyChainState, originX, originY, now, tileW, tileH, tileD);
+      drawDependencyChain(ctx, enemy as DependencyChainState, originX, originY, now, tileW, tileH, tileD, gap);
       break;
   }
 }
@@ -46,24 +47,21 @@ function getEnemyScreenPos(
   originY: number,
   tileW: number,
   tileH: number,
-  tileD: number
+  tileD: number,
+  gap: number
 ): { x: number; y: number } {
   if (enemy.isHopping) {
-    const fromX = originX + (enemy.hopFrom.col - enemy.hopFrom.row) * (tileW / 2);
-    const fromY = originY + (enemy.hopFrom.col + enemy.hopFrom.row) * (tileH / 2) + enemy.hopFrom.row * tileD + tileH / 2;
-    const toX = originX + (enemy.hopTo.col - enemy.hopTo.row) * (tileW / 2);
-    const toY = originY + (enemy.hopTo.col + enemy.hopTo.row) * (tileH / 2) + enemy.hopTo.row * tileD + tileH / 2;
+    const from = tileToScreen(enemy.hopFrom.row, enemy.hopFrom.col, originX, originY, tileW, tileH, tileD, gap);
+    const to = tileToScreen(enemy.hopTo.row, enemy.hopTo.col, originX, originY, tileW, tileH, tileD, gap);
     const p = enemy.hopProgress;
     const arcY = hopArcOffset(p, TIMING.ENEMY_HOP_ARC_PX);
     return {
-      x: fromX + (toX - fromX) * p,
-      y: fromY + (toY - fromY) * p - arcY,
+      x: from.x + (to.x - from.x) * p,
+      y: (from.y + tileH / 2) + ((to.y + tileH / 2) - (from.y + tileH / 2)) * p - arcY,
     };
   }
-  return {
-    x: originX + (enemy.col - enemy.row) * (tileW / 2),
-    y: originY + (enemy.col + enemy.row) * (tileH / 2) + enemy.row * tileD + tileH / 2,
-  };
+  const pos = tileToScreen(enemy.row, enemy.col, originX, originY, tileW, tileH, tileD, gap);
+  return { x: pos.x, y: pos.y + tileH / 2 };
 }
 
 function drawHallucinator(ctx: CanvasRenderingContext2D, cx: number, cy: number, now: number) {
@@ -245,7 +243,8 @@ function drawDependencyChain(
   _now: number,
   tileW: number,
   tileH: number,
-  tileD: number
+  tileD: number,
+  gap: number
 ) {
   if (!enemy.alive) return;
 
@@ -254,7 +253,7 @@ function drawDependencyChain(
 
   for (let i = segments.length - 1; i >= 0; i--) {
     const seg = segments[i];
-    const { x, y } = tileToScreen(seg.row, seg.col, originX, originY, tileW, tileH, tileD);
+    const { x, y } = tileToScreen(seg.row, seg.col, originX, originY, tileW, tileH, tileD, gap);
     const drawY = y + tileH / 2 - 14;
 
     const isHead = i === 0;

@@ -7,7 +7,8 @@
       "Bash(cp /tmp/joule-bert/tsconfig.node.json /Users/I809433/Projects/ibd/joule-bert/tsconfig.node.json)",
       "Bash(cp /tmp/joule-bert/vite.config.ts /Users/I809433/Projects/ibd/joule-bert/vite.config.ts)",
       "Bash(npm run:*)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5174/)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5174/)",
+      "Bash(python3:*)"
     ]
   }
 }

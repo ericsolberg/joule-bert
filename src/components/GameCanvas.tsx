@@ -3,7 +3,7 @@ import type { GameState } from '../game/engine/gameState';
 import { GamePhase, createInitialGameState } from '../game/engine/gameState';
 import { updateGame } from '../game/engine/gameUpdate';
 import { computeOrigin, tileToScreen } from '../game/engine/boardModel';
-import { drawBoard, drawEscapeNode } from '../renderer/boardRenderer';
+import { drawBoard, drawEscapeNode, SVG_H_OVER_W } from '../renderer/boardRenderer';
 import { drawPlayer, getPlayerScreenPos } from '../renderer/playerRenderer';
 import { drawEnemy } from '../renderer/enemyRenderer';
 import { drawBonusItems, drawVictoryFlash, drawLevelText, drawJouleOnlineText } from '../renderer/effectRenderer';
@@ -13,9 +13,18 @@ import { HUD } from './HUD';
 import { PauseScreen } from './PauseScreen';
 import { TIMING } from '../game/engine/timing';
 
-const TILE_W = 64;
-const TILE_H = 32;
-const TILE_D = 20;
+const MAX_TILE_W = 200;
+const MARGIN = 80; // horizontal padding so tiles don't touch the edge
+const TILE_GAP = 10; // pixels of space between adjacent tiles
+
+/** Compute responsive tile dimensions from canvas width and board row count. */
+function computeTileDims(canvasW: number, numRows: number) {
+  const responsiveW = Math.floor((canvasW - MARGIN) * 2 / numRows);
+  const tileW = Math.min(MAX_TILE_W, Math.max(40, responsiveW));
+  const tileH = Math.round(tileW / 2);                          // 2:1 isometric diamond
+  const tileD = Math.round(tileW * SVG_H_OVER_W - tileH);      // depth from SVG aspect ratio
+  return { tileW, tileH, tileD };
+}
 
 interface GameCanvasProps {
   hiScore: number;
@@ -29,8 +38,15 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
   const [hasMoved, setHasMoved] = useState(false);
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const { consumeDirection, consumePause } = useGameInput();
+  // SVG tile image
+  const tileImageRef = useRef<HTMLImageElement | null>(null);
+  useEffect(() => {
+    const img = new Image();
+    img.src = '/jbert-game-tile.svg';
+    tileImageRef.current = img;
+  }, []);
 
+  const { consumeDirection, consumePause } = useGameInput();
   const [phase, setPhase] = useState<GamePhase>(GamePhase.LevelIntro);
 
   const update = useCallback((deltaMs: number, now: number) => {
@@ -63,6 +79,7 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
     }
   }, [consumeDirection, consumePause, hiScore, hasMoved, onHiScoreUpdate, onGameOver]);
 
+  // Handle un-pause from paused state
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if ((e.code === 'Escape' || e.code === 'KeyP') && stateRef.current.phase === GamePhase.Paused) {
@@ -95,31 +112,40 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
     ctx.fillStyle = '#0A0A1A';
     ctx.fillRect(0, 0, w, h);
 
-    const { originX, originY } = computeOrigin(state.board.rows, w, h, TILE_W, TILE_H, TILE_D);
+    // Responsive tile dimensions — recomputed every frame so resize is instant
+    const { tileW, tileH, tileD } = computeTileDims(w, state.board.rows);
+    const { originX, originY } = computeOrigin(state.board.rows, w, h, tileW, tileH, tileD, TILE_GAP);
     const now = performance.now();
+    const tileImage = tileImageRef.current;
 
     const introProgress = state.phase === GamePhase.LevelIntro ? state.introProgress : 1;
     const dissolveProgress = state.phase === GamePhase.LevelClear ? state.dissolveProgress : 0;
-    drawBoard(ctx, state.board, originX, originY, introProgress, dissolveProgress, now, reduceMotion);
+
+    drawBoard(
+      ctx, state.board, originX, originY,
+      introProgress, dissolveProgress,
+      now, reduceMotion,
+      tileImage, tileW, tileH, tileD, TILE_GAP
+    );
 
     // Draw escape nodes
     for (const node of state.escapeNodes) {
       const anchorCol = node.side === 'left' ? 0 : node.anchorRow;
-      const base = tileToScreen(node.anchorRow, anchorCol, originX, originY, TILE_W, TILE_H, TILE_D);
+      const base = tileToScreen(node.anchorRow, anchorCol, originX, originY, tileW, tileH, tileD, TILE_GAP);
       let nx: number, ny: number;
 
       if (node.side === 'left') {
-        nx = base.x - TILE_W;
-        ny = base.y + TILE_H / 2;
+        nx = base.x - tileW;
+        ny = base.y + tileH / 2;
       } else {
-        nx = base.x + TILE_W;
-        ny = base.y + TILE_H / 2;
+        nx = base.x + tileW;
+        ny = base.y + tileH / 2;
       }
 
       if (node.animating) {
-        const topPos = tileToScreen(0, 0, originX, originY, TILE_W, TILE_H, TILE_D);
+        const topPos = tileToScreen(0, 0, originX, originY, tileW, tileH, tileD, TILE_GAP);
         const tx = topPos.x;
-        const ty = topPos.y + TILE_H / 2;
+        const ty = topPos.y + tileH / 2;
         const p = node.animProgress;
         const ep = p * p * (3 - 2 * p);
         nx = nx + (tx - nx) * ep;
@@ -129,21 +155,20 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
       drawEscapeNode(ctx, nx, ny, node.active, node.animating, node.animProgress, node.respawnAt, now);
     }
 
-    drawBonusItems(ctx, state.bonusItems, originX, originY, now, TILE_W, TILE_H, TILE_D);
+    drawBonusItems(ctx, state.bonusItems, originX, originY, now, tileW, tileH, tileD, TILE_GAP);
 
     for (const enemy of state.enemies) {
-      drawEnemy(ctx, enemy, originX, originY, now, TILE_W, TILE_H, TILE_D);
+      drawEnemy(ctx, enemy, originX, originY, now, tileW, tileH, tileD, TILE_GAP);
     }
 
     if (state.phase !== GamePhase.LevelIntro || state.introProgress >= 1) {
-      const playerPos = getPlayerScreenPos(state.player, originX, originY, TILE_W, TILE_H, TILE_D);
+      const playerPos = getPlayerScreenPos(state.player, originX, originY, tileW, tileH, tileD, TILE_GAP);
       drawPlayer(ctx, state.player, playerPos.x, playerPos.y, now, reduceMotion);
     }
 
     if (state.phase === GamePhase.LevelClear) {
       const totalClearMs = TIMING.VICTORY_FLASH_MS + TIMING.SCORE_TALLY_MS + TIMING.BOARD_DISSOLVE_TOTAL_MS + TIMING.JOULE_ONLINE_DISPLAY_MS;
       drawVictoryFlash(ctx, w, h, state.clearProgress, TIMING.VICTORY_FLASH_MS, totalClearMs);
-
       const jouleOnlineStart = (TIMING.VICTORY_FLASH_MS + TIMING.SCORE_TALLY_MS + TIMING.BOARD_DISSOLVE_TOTAL_MS) / totalClearMs;
       drawJouleOnlineText(ctx, w, h, state.clearProgress, jouleOnlineStart);
     }
@@ -155,7 +180,7 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
     }
   }, [reduceMotion]);
 
-  // Force React re-renders for HUD sync - run at 10fps
+  // Low-frequency React re-render to keep HUD values in sync
   const [, setTick] = useState(0);
   useEffect(() => {
     const id = setInterval(() => setTick(t => t + 1), 100);

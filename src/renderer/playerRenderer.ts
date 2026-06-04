@@ -1,4 +1,5 @@
 import type { PlayerState } from '../game/entities/player';
+import { tileToScreen } from '../game/engine/boardModel';
 import { hopArcOffset } from '../game/engine/physics';
 import { TIMING } from '../game/engine/timing';
 
@@ -143,13 +144,16 @@ export function getPlayerScreenPos(
   originY: number,
   tileW = 64,
   tileH = 32,
-  tileD = 20
+  tileD = 20,
+  gap = 0
 ): { x: number; y: number } {
   if (player.isHopping) {
-    const fromX = originX + (player.hopFrom.col - player.hopFrom.row) * (tileW / 2);
-    const fromY = originY + (player.hopFrom.col + player.hopFrom.row) * (tileH / 2) + player.hopFrom.row * tileD + tileH / 2;
-    const toX = originX + (player.hopTo.col - player.hopTo.row) * (tileW / 2);
-    const toY = originY + (player.hopTo.col + player.hopTo.row) * (tileH / 2) + player.hopTo.row * tileD + tileH / 2;
+    const from = tileToScreen(player.hopFrom.row, player.hopFrom.col, originX, originY, tileW, tileH, tileD, gap);
+    const to = tileToScreen(player.hopTo.row, player.hopTo.col, originX, originY, tileW, tileH, tileD, gap);
+    const fromX = from.x;
+    const fromY = from.y + tileH / 2;
+    const toX = to.x;
+    const toY = to.y + tileH / 2;
 
     const p = player.hopProgress;
     const arcY = hopArcOffset(p, TIMING.PLAYER_HOP_ARC_PX);
@@ -160,8 +164,6 @@ export function getPlayerScreenPos(
     };
   }
 
-  return {
-    x: originX + (player.col - player.row) * (tileW / 2),
-    y: originY + (player.col + player.row) * (tileH / 2) + player.row * tileD + tileH / 2,
-  };
+  const pos = tileToScreen(player.row, player.col, originX, originY, tileW, tileH, tileD, gap);
+  return { x: pos.x, y: pos.y + tileH / 2 };
 }

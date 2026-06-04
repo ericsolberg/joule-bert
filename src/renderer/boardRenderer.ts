@@ -1,23 +1,16 @@
-import { BoardModel, TileState, tileToScreen } from '../game/engine/boardModel';
+import type { BoardModel } from '../game/engine/boardModel';
+import { TileState, tileToScreen } from '../game/engine/boardModel';
 
-const TILE_W = 64;
-const TILE_H = 32;
-const TILE_D = 20;
+// SVG intrinsic dimensions — used to derive depth from tile width
+const SVG_H_OVER_W = 896 / 1544; // ≈ 0.580
 
-function lighten(hex: string, factor: number): string {
-  const n = parseInt(hex.slice(1), 16);
-  const r = Math.min(255, Math.round(((n >> 16) & 0xff) * factor));
-  const g = Math.min(255, Math.round(((n >> 8) & 0xff) * factor));
-  const b = Math.min(255, Math.round((n & 0xff) * factor));
-  return `rgb(${r},${g},${b})`;
-}
-
-const STATE_COLORS: Record<TileState, string> = {
-  [TileState.Unvisited]: '#1E1E3A',
-  [TileState.Activating]: '#6B4FBB',
-  [TileState.Activated]: '#A78BFA',
-  [TileState.Frozen]: '#4B5563',
-  [TileState.Corrupted]: '#F97316',
+// Per-state overlay colours (drawn semi-transparently over the top diamond face)
+const STATE_OVERLAY: Record<TileState, string | null> = {
+  [TileState.Unvisited]:  null,                       // show raw SVG
+  [TileState.Activating]: 'rgba(107,79,187,0.45)',    // soft purple
+  [TileState.Activated]:  'rgba(167,139,250,0.55)',   // bright violet
+  [TileState.Frozen]:     'rgba(75,85,99,0.65)',      // cool grey
+  [TileState.Corrupted]:  'rgba(249,115,22,0.60)',    // amber warning
 };
 
 export function drawBoard(
@@ -28,37 +21,46 @@ export function drawBoard(
   introProgress: number,
   dissolveProgress: number,
   now: number,
-  reduceMotion: boolean
+  reduceMotion: boolean,
+  tileImage: HTMLImageElement | null = null,
+  tileW = 64,
+  tileH = 32,
+  tileD = 20,
+  gap = 0
 ) {
   const totalTileTime = board.rows * 80 + 300;
+  const imgH = tileH + tileD;
 
   for (let r = 0; r < board.rows; r++) {
     for (let c = 0; c <= r; c++) {
       const tile = board.tiles[r][c];
-      const { x, y } = tileToScreen(r, c, originX, originY, TILE_W, TILE_H, TILE_D);
+      const { x, y } = tileToScreen(r, c, originX, originY, tileW, tileH, tileD, gap);
 
-      // Staggered intro animation
+      // Staggered intro / dissolve scale
       let tileScale = 1;
       if (!reduceMotion && introProgress < 1) {
         const tileStart = (r * 80) / totalTileTime;
         const tileEnd = tileStart + 300 / totalTileTime;
-        const localProgress = (introProgress - tileStart) / (tileEnd - tileStart);
-        tileScale = Math.max(0, Math.min(1, localProgress));
+        const localP = (introProgress - tileStart) / (tileEnd - tileStart);
+        tileScale = Math.max(0, Math.min(1, localP));
       }
       if (!reduceMotion && dissolveProgress > 0) {
         const tileStart = ((board.rows - 1 - r) * 80) / totalTileTime;
-        const localProgress = Math.max(0, dissolveProgress - tileStart);
-        tileScale = Math.max(0, 1 - localProgress * 3);
+        const localP = Math.max(0, dissolveProgress - tileStart);
+        tileScale = Math.max(0, 1 - localP * 3);
       }
-
       if (tileScale <= 0) continue;
 
       ctx.save();
-      ctx.translate(x, y + TILE_H / 2);
+      // Scale around the visual centre of the tile
+      const cx = x;
+      const cy = y + imgH / 2;
+      ctx.translate(cx, cy);
       if (tileScale < 1) ctx.scale(tileScale, tileScale);
-      ctx.translate(-x, -(y + TILE_H / 2));
+      ctx.translate(-cx, -cy);
 
-      drawTile(ctx, x, y, tile.state, tile.pulseAt, now, reduceMotion);
+      drawTile(ctx, x, y, tile.state, tile.pulseAt, now, reduceMotion,
+               tileImage, tileW, tileH, tileD);
       ctx.restore();
     }
   }
@@ -71,122 +73,172 @@ function drawTile(
   state: TileState,
   pulseAt: number | null,
   now: number,
-  reduceMotion: boolean
+  reduceMotion: boolean,
+  tileImage: HTMLImageElement | null,
+  tileW: number,
+  tileH: number,
+  tileD: number
 ) {
-  const topColor = STATE_COLORS[state];
-  const leftColor = lighten(topColor, 0.6);
-  const rightColor = lighten(topColor, 0.35);
+  const imgH = tileH + tileD;
+  const hw = tileW / 2;
+  const hh = tileH / 2;
 
-  const hw = TILE_W / 2;
-  const hh = TILE_H / 2;
-
-  // Pulse glow effect
+  // ── 1. Pulse glow setup ──────────────────────────────────────────────────
+  let glowActive = false;
   if (!reduceMotion && pulseAt !== null) {
     const elapsed = now - pulseAt;
-    if (elapsed < 400) {
-      const glowAlpha = (1 - elapsed / 400) * 0.7;
-      ctx.save();
-      ctx.shadowBlur = 20 * (1 - elapsed / 400);
+    if (elapsed < 500) {
+      glowActive = true;
+      ctx.shadowBlur = 24 * (1 - elapsed / 500);
       ctx.shadowColor = '#A78BFA';
-      ctx.globalAlpha = glowAlpha;
     }
   }
 
-  // Top face (diamond)
+  // ── 2. Draw SVG tile image ───────────────────────────────────────────────
+  if (tileImage && tileImage.complete && tileImage.naturalWidth > 0) {
+    ctx.drawImage(tileImage, x - hw, y, tileW, imgH);
+  } else {
+    // Fallback path-draw while image loads (or if null)
+    drawFallbackTile(ctx, x, y, state, tileW, tileH, tileD);
+  }
+
+  if (glowActive) {
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'transparent';
+  }
+
+  // ── 3. State colour overlay on top diamond face ──────────────────────────
+  const overlay = STATE_OVERLAY[state];
+  if (overlay) {
+    // Pulse glow re-applied to the overlay for visual punch
+    if (!reduceMotion && pulseAt !== null && now - pulseAt < 500) {
+      ctx.shadowBlur = 18 * (1 - (now - pulseAt) / 500);
+      ctx.shadowColor = overlay;
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(x,      y);
+    ctx.lineTo(x + hw, y + hh);
+    ctx.lineTo(x,      y + tileH);
+    ctx.lineTo(x - hw, y + hh);
+    ctx.closePath();
+    ctx.fillStyle = overlay;
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'transparent';
+  }
+
+  // ── 4. Accessibility symbol on top face ──────────────────────────────────
+  drawTileSymbol(ctx, x, y + hh, state, tileW);
+}
+
+function drawFallbackTile(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  state: TileState,
+  tileW: number,
+  tileH: number,
+  tileD: number
+) {
+  const hw = tileW / 2;
+  const hh = tileH / 2;
+
+  const colors: Record<TileState, string> = {
+    [TileState.Unvisited]:  '#1E1E3A',
+    [TileState.Activating]: '#6B4FBB',
+    [TileState.Activated]:  '#A78BFA',
+    [TileState.Frozen]:     '#4B5563',
+    [TileState.Corrupted]:  '#F97316',
+  };
+
+  const top = colors[state];
+
   ctx.beginPath();
-  ctx.moveTo(x, y);
+  ctx.moveTo(x,      y);
   ctx.lineTo(x + hw, y + hh);
-  ctx.lineTo(x, y + TILE_H);
+  ctx.lineTo(x,      y + tileH);
   ctx.lineTo(x - hw, y + hh);
   ctx.closePath();
-  ctx.fillStyle = topColor;
+  ctx.fillStyle = top;
   ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-  ctx.lineWidth = 0.5;
-  ctx.stroke();
 
   // Left face
   ctx.beginPath();
   ctx.moveTo(x - hw, y + hh);
-  ctx.lineTo(x, y + TILE_H);
-  ctx.lineTo(x, y + TILE_H + TILE_D);
-  ctx.lineTo(x - hw, y + hh + TILE_D);
+  ctx.lineTo(x,      y + tileH);
+  ctx.lineTo(x,      y + tileH + tileD);
+  ctx.lineTo(x - hw, y + hh + tileD);
   ctx.closePath();
-  ctx.fillStyle = leftColor;
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
   ctx.fill();
-  ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-  ctx.lineWidth = 0.5;
-  ctx.stroke();
 
   // Right face
   ctx.beginPath();
-  ctx.moveTo(x, y + TILE_H);
+  ctx.moveTo(x,      y + tileH);
   ctx.lineTo(x + hw, y + hh);
-  ctx.lineTo(x + hw, y + hh + TILE_D);
-  ctx.lineTo(x, y + TILE_H + TILE_D);
+  ctx.lineTo(x + hw, y + hh + tileD);
+  ctx.lineTo(x,      y + tileH + tileD);
   ctx.closePath();
-  ctx.fillStyle = rightColor;
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
   ctx.fill();
-  ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-  ctx.lineWidth = 0.5;
-  ctx.stroke();
-
-  // Reset glow
-  if (pulseAt !== null) {
-    const elapsed = now - pulseAt;
-    if (elapsed < 400) {
-      ctx.restore();
-    }
-  }
-
-  // Accessibility symbols on top face
-  drawTileSymbol(ctx, x, y + hh, state);
 }
 
-function drawTileSymbol(ctx: CanvasRenderingContext2D, cx: number, cy: number, state: TileState) {
+function drawTileSymbol(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  state: TileState,
+  tileW: number
+) {
+  const scale = tileW / 64; // scale symbols relative to original 64px tile size
   ctx.save();
-  ctx.fillStyle = 'rgba(255,255,255,0.4)';
-  ctx.font = 'bold 9px monospace';
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = `bold ${Math.round(9 * scale)}px monospace`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
   switch (state) {
-    case TileState.Activating:
+    case TileState.Activating: {
       ctx.beginPath();
-      ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+      ctx.arc(cx, cy, 3 * scale, 0, Math.PI * 2);
       ctx.fill();
       break;
+    }
     case TileState.Activated: {
-      // 4-point star ✦
-      const s = 4;
+      const s = 4 * scale;
       ctx.beginPath();
       for (let i = 0; i < 8; i++) {
         const angle = (i * Math.PI) / 4 - Math.PI / 2;
-        const r = i % 2 === 0 ? s : s * 0.4;
-        const px = cx + Math.cos(angle) * r;
-        const py = cy + Math.sin(angle) * r;
+        const r2 = i % 2 === 0 ? s : s * 0.4;
+        const px = cx + Math.cos(angle) * r2;
+        const py = cy + Math.sin(angle) * r2;
         i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
       }
       ctx.closePath();
-      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
       ctx.fill();
       break;
     }
     case TileState.Frozen: {
-      // Snowflake cross
-      ctx.strokeStyle = 'rgba(200,220,255,0.6)';
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(200,220,255,0.7)';
+      ctx.lineWidth = 1.5 * scale;
+      const arm = 4 * scale;
       ctx.beginPath();
-      ctx.moveTo(cx - 4, cy); ctx.lineTo(cx + 4, cy);
-      ctx.moveTo(cx, cy - 4); ctx.lineTo(cx, cy + 4);
-      ctx.moveTo(cx - 3, cy - 3); ctx.lineTo(cx + 3, cy + 3);
-      ctx.moveTo(cx + 3, cy - 3); ctx.lineTo(cx - 3, cy + 3);
+      ctx.moveTo(cx - arm, cy); ctx.lineTo(cx + arm, cy);
+      ctx.moveTo(cx, cy - arm); ctx.lineTo(cx, cy + arm);
+      ctx.moveTo(cx - arm * 0.7, cy - arm * 0.7); ctx.lineTo(cx + arm * 0.7, cy + arm * 0.7);
+      ctx.moveTo(cx + arm * 0.7, cy - arm * 0.7); ctx.lineTo(cx - arm * 0.7, cy + arm * 0.7);
       ctx.stroke();
       break;
     }
-    case TileState.Corrupted:
-      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    case TileState.Corrupted: {
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
       ctx.fillText('!', cx, cy);
+      break;
+    }
+    default:
       break;
   }
 
@@ -213,7 +265,6 @@ export function drawEscapeNode(
   ctx.save();
   ctx.globalAlpha = alpha;
 
-  // Rounded rect
   ctx.beginPath();
   ctx.moveTo(x - w / 2 + r, y - h / 2);
   ctx.lineTo(x + w / 2 - r, y - h / 2);
@@ -231,11 +282,9 @@ export function drawEscapeNode(
   ctx.lineWidth = 2;
   ctx.stroke();
 
-  // Respawn arc
+  // Respawn progress arc
   if (!active && !animating && respawnAt !== null) {
-    const remaining = respawnAt - now;
-    const total = 8000;
-    const frac = Math.max(0, 1 - remaining / total);
+    const frac = Math.max(0, 1 - (respawnAt - now) / 8000);
     ctx.beginPath();
     ctx.arc(x, y, w / 2 - 2, -Math.PI / 2, -Math.PI / 2 + frac * Math.PI * 2);
     ctx.strokeStyle = '#2DD4BF';
@@ -243,13 +292,15 @@ export function drawEscapeNode(
     ctx.stroke();
   }
 
-  // Cloud icon (3 circles)
+  // Cloud icon
   ctx.fillStyle = '#2DD4BF';
   ctx.beginPath(); ctx.arc(x - 7, y + 2, 4, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(x, y - 1, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x,     y - 1, 5, 0, Math.PI * 2); ctx.fill();
   ctx.beginPath(); ctx.arc(x + 7, y + 2, 4, 0, Math.PI * 2); ctx.fill();
-  // Cloud base
   ctx.fillRect(x - 11, y + 2, 22, 4);
 
   ctx.restore();
 }
+
+// Export the helper so GameCanvas can use it for tile sizing
+export { SVG_H_OVER_W };

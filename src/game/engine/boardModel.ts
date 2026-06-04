@@ -83,11 +83,12 @@ export function tileToScreen(
   originY: number,
   tileW = 64,
   tileH = 32,
-  tileD = 20
+  tileD = 20,
+  gap = 0
 ): { x: number; y: number } {
   return {
-    x: originX + (col - row) * (tileW / 2),
-    y: originY + (col + row) * (tileH / 2) + row * tileD,
+    x: originX + (2 * col - row) * (tileW + gap) / 2,
+    y: originY + row * (tileH / 2 + tileD + gap),
   };
 }
 
@@ -97,9 +98,10 @@ export function computeOrigin(
   canvasH: number,
   _tileW = 64,
   tileH = 32,
-  tileD = 20
+  tileD = 20,
+  gap = 0
 ): { originX: number; originY: number } {
-  const pyramidH = (numRows - 1) * (tileH / 2 + tileD) + tileH;
+  const pyramidH = (numRows - 1) * (tileH / 2 + tileD + gap) + tileH + tileD;
   const hudHeight = 80;
   return {
     originX: canvasW / 2,
