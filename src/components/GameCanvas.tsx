@@ -67,6 +67,9 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
   useEffect(() => {
     Promise.all([
       soundManager.load('jump', '/jump.mp3'),
+      soundManager.load('enemy-jump-2', '/enemy-jump-2.mp3'),
+      soundManager.load('enemy-jump-4', '/enemy-jump-4.mp3'),
+      soundManager.load('lift', '/lift.mp3'),
       soundManager.load('level-start', '/level-start.mp3'),
       soundManager.load('victory', '/victory.mp3'),
       soundManager.load('fall', '/fall.mp3'),
@@ -98,8 +101,22 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
     if (newState.player.isHopping && !state.player.isHopping) {
       soundManager.play('jump');
     }
+
+    for (let i = 0; i < newState.enemies.length; i++) {
+      const prev = state.enemies[i];
+      const next = newState.enemies[i];
+      if (next.isHopping && !prev?.isHopping) {
+        soundManager.play(Math.random() < 0.5 ? 'enemy-jump-2' : 'enemy-jump-4', 0.6);
+      }
+      if (next.isFalling && !prev?.isFalling) {
+        soundManager.play('fall', 0.5);
+      }
+    }
     if (newState.player.animState === 'dead' && state.player.animState !== 'dead') {
       soundManager.play('fall');
+    }
+    if (newState.player.isEscaping && !state.player.isEscaping) {
+      soundManager.play('lift');
     }
 
     if (newState.score > hiScore) {
