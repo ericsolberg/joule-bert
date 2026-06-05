@@ -106,9 +106,9 @@ function getEnemyScreenPos(
 }
 
 function drawHallucinator(ctx: CanvasRenderingContext2D, cx: number, cy: number, image: HTMLImageElement | null) {
-  const size = 48;
+  const size = 75;
   if (image) {
-    ctx.drawImage(image, cx - size / 2, cy - size, size, size);
+    ctx.drawImage(image, cx - size / 2, cy - size + 15, size, size);
   } else {
     // Fallback: simple circle
     ctx.save();
@@ -123,7 +123,7 @@ function drawHallucinator(ctx: CanvasRenderingContext2D, cx: number, cy: number,
 function drawDataSilo(ctx: CanvasRenderingContext2D, cx: number, cy: number, image: HTMLImageElement | null) {
   const size = 75;
   if (image) {
-    ctx.drawImage(image, cx - size / 2, cy - size, size, size);
+    ctx.drawImage(image, cx - size / 2, cy - size + 15, size, size);
   } else {
     ctx.save();
     ctx.fillStyle = '#475569';
@@ -135,7 +135,7 @@ function drawDataSilo(ctx: CanvasRenderingContext2D, cx: number, cy: number, ima
 function drawComplianceTroll(ctx: CanvasRenderingContext2D, cx: number, cy: number, image: HTMLImageElement | null) {
   const size = 75;
   if (image) {
-    ctx.drawImage(image, cx - size / 2, cy - size, size, size);
+    ctx.drawImage(image, cx - size / 2, cy - size + 15, size, size);
   } else {
     ctx.save();
     ctx.fillStyle = '#1E3A5F';
@@ -147,7 +147,7 @@ function drawComplianceTroll(ctx: CanvasRenderingContext2D, cx: number, cy: numb
 function drawLegacyGoblin(ctx: CanvasRenderingContext2D, cx: number, cy: number, image: HTMLImageElement | null) {
   const size = 75;
   if (image) {
-    ctx.drawImage(image, cx - size / 2, cy - size, size, size);
+    ctx.drawImage(image, cx - size / 2, cy - size + 15, size, size);
   } else {
     ctx.save();
     ctx.beginPath();
@@ -161,7 +161,7 @@ function drawLegacyGoblin(ctx: CanvasRenderingContext2D, cx: number, cy: number,
 function drawContextGremlin(ctx: CanvasRenderingContext2D, cx: number, cy: number, image: HTMLImageElement | null) {
   const size = 75;
   if (image) {
-    ctx.drawImage(image, cx - size / 2, cy - size, size, size);
+    ctx.drawImage(image, cx - size / 2, cy - size + 15, size, size);
   } else {
     ctx.save();
     ctx.beginPath();

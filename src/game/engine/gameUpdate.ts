@@ -29,6 +29,29 @@ const GLOBAL_ENEMY_POOL: EnemyType[] = [
 
 // ── Enemy creation helpers ───────────────────────────────────────────────────
 
+/** Returns the next pool type that isn't already active on the board, and the
+ *  index AFTER it.  "Active" means alive, falling, or waiting to respawn. */
+function nextUniqueType(
+  poolIndex: number,
+  activeEnemies: EnemyState[]
+): { type: EnemyType; nextPoolIndex: number } {
+  const activeTypes = new Set(
+    activeEnemies
+      .filter(e => e.alive || e.isFalling || e.respawnAt !== null)
+      .map(e => e.type)
+  );
+  for (let i = 0; i < GLOBAL_ENEMY_POOL.length; i++) {
+    const idx = (poolIndex + i) % GLOBAL_ENEMY_POOL.length;
+    const type = GLOBAL_ENEMY_POOL[idx];
+    if (!activeTypes.has(type)) {
+      return { type, nextPoolIndex: (idx + 1) % GLOBAL_ENEMY_POOL.length };
+    }
+  }
+  // Fallback: all types active (shouldn't occur with max 2 enemies and 5 types)
+  const type = GLOBAL_ENEMY_POOL[poolIndex % GLOBAL_ENEMY_POOL.length];
+  return { type, nextPoolIndex: (poolIndex + 1) % GLOBAL_ENEMY_POOL.length };
+}
+
 function createEnemyOfType(type: EnemyType, id: string, boardRows: number): EnemyState {
   switch (type) {
     case EnemyType.Hallucinator: return createHallucinator(id);
@@ -50,9 +73,8 @@ function buildEnemyQueue(
   const firstType = pool[poolIndex % pool.length];
   const firstEnemy = createEnemyOfType(firstType, `${firstType}-${level}-0`, boardRows);
 
-  let nextPoolIndex = (poolIndex + 1) % pool.length;
+  const nextPoolIndex = (poolIndex + 1) % pool.length;
   const queue: EnemyType[] = maxEnemies > 1 ? [pool[nextPoolIndex]] : [];
-  if (queue.length > 0) nextPoolIndex = (nextPoolIndex + 1) % pool.length;
 
   return { firstEnemy, queue, nextPoolIndex };
 }
@@ -322,15 +344,16 @@ function maybeSpawnNextEnemy(state: GameState, now: number): GameState {
     return { ...state, enemies: liveEnemies, nextEnemyAt: now + 3000 };
   }
 
-  const [type, ...rest] = state.enemyQueue;
-  const id = `${type}-${state.level}-q-${now}`;
-  const newEnemy = createEnemyOfType(type, id, state.board.rows);
+  const [, ...rest] = state.enemyQueue;
+  const { type, nextPoolIndex } = nextUniqueType(state.enemyPoolIndex, liveEnemies);
+  const newEnemy = createEnemyOfType(type, `${type}-${state.level}-q-${now}`, state.board.rows);
 
   return {
     ...state,
     enemies: [...liveEnemies, newEnemy],
     enemyQueue: rest,
     nextEnemyAt: rest.length > 0 ? now + TIMING.ENEMY_STAGGER_MS : null,
+    enemyPoolIndex: nextPoolIndex,
   };
 }
 
@@ -339,18 +362,22 @@ function maybeSpawnNextEnemy(state: GameState, now: number): GameState {
 function tickAllEnemies(state: GameState, now: number): GameState {
   let enemies = state.enemies;
   const board = state.board;
-  const pool = GLOBAL_ENEMY_POOL;
   let enemyPoolIndex = state.enemyPoolIndex;
 
-  // Respawn dead enemies using next type from pool
-  enemies = enemies.map(e => {
+  // Respawn dead enemies using next unique type from pool
+  const respawned: EnemyState[] = [];
+  for (const e of enemies) {
     if (!e.alive && !e.isFalling && e.respawnAt !== null && now >= e.respawnAt) {
-      const type = pool[enemyPoolIndex % pool.length];
-      enemyPoolIndex = (enemyPoolIndex + 1) % pool.length;
-      return createEnemyOfType(type, `${type}-${state.level}-r-${now}`, board.rows);
+      const { type, nextPoolIndex } = nextUniqueType(enemyPoolIndex, respawned.concat(
+        enemies.filter(x => x !== e && (x.alive || x.isFalling || x.respawnAt !== null))
+      ));
+      enemyPoolIndex = nextPoolIndex;
+      respawned.push(createEnemyOfType(type, `${type}-${state.level}-r-${now}`, board.rows));
+    } else {
+      respawned.push(e);
     }
-    return e;
-  });
+  }
+  enemies = respawned;
 
   const newEnemies: EnemyState[] = [];
   for (const e of enemies) {
