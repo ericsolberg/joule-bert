@@ -63,12 +63,51 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
     escapeNodeImageRef.current = img;
   }, []);
 
+  // Hallucinator image
+  const hallucinatorImageRef = useRef<HTMLImageElement | null>(null);
+  useEffect(() => {
+    const img = new Image();
+    img.src = '/hallucinator.png';
+    hallucinatorImageRef.current = img;
+  }, []);
+
+  // Legacy Goblin image
+  const legacyGoblinImageRef = useRef<HTMLImageElement | null>(null);
+  useEffect(() => {
+    const img = new Image();
+    img.src = '/legacygoblin.png';
+    legacyGoblinImageRef.current = img;
+  }, []);
+
+  // Data Silo image
+  const datasiloImageRef = useRef<HTMLImageElement | null>(null);
+  useEffect(() => {
+    const img = new Image();
+    img.src = '/datasilo.png';
+    datasiloImageRef.current = img;
+  }, []);
+
+  // Context Gremlin image
+  const contextGremlinImageRef = useRef<HTMLImageElement | null>(null);
+  useEffect(() => {
+    const img = new Image();
+    img.src = '/contextgremlin.png';
+    contextGremlinImageRef.current = img;
+  }, []);
+
+  // Compliance Troll image
+  const complianceTrollImageRef = useRef<HTMLImageElement | null>(null);
+  useEffect(() => {
+    const img = new Image();
+    img.src = '/compliancetroll.png';
+    complianceTrollImageRef.current = img;
+  }, []);
+
   // Preload sounds and play level-start for the first level
   useEffect(() => {
     Promise.all([
       soundManager.load('jump', '/jump.mp3'),
       soundManager.load('enemy-jump-2', '/enemy-jump-2.mp3'),
-      soundManager.load('enemy-jump-4', '/enemy-jump-4.mp3'),
       soundManager.load('lift', '/lift.mp3'),
       soundManager.load('level-start', '/level-start.mp3'),
       soundManager.load('victory', '/victory.mp3'),
@@ -106,7 +145,7 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
       const prev = state.enemies[i];
       const next = newState.enemies[i];
       if (next.isHopping && !prev?.isHopping) {
-        soundManager.play(Math.random() < 0.5 ? 'enemy-jump-2' : 'enemy-jump-4', 0.6);
+        soundManager.play('enemy-jump-2', 0.6);
       }
       if (next.isFalling && !prev?.isFalling) {
         soundManager.play('fall', 0.5);
@@ -217,7 +256,7 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
     drawBonusItems(ctx, state.bonusItems, originX, originY, now, tileW, tileH, tileD, TILE_GAP);
 
     for (const enemy of state.enemies) {
-      drawEnemy(ctx, enemy, originX, originY, now, tileW, tileH, tileD, TILE_GAP);
+      drawEnemy(ctx, enemy, originX, originY, now, tileW, tileH, tileD, TILE_GAP, hallucinatorImageRef.current, legacyGoblinImageRef.current, datasiloImageRef.current, contextGremlinImageRef.current, complianceTrollImageRef.current);
     }
 
     if (state.phase !== GamePhase.LevelIntro || state.introProgress >= 1) {

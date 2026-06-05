@@ -4,7 +4,6 @@ export const EnemyType = {
   ComplianceTroll: 'complianceTroll',
   LegacyGoblin: 'legacyGoblin',
   ContextGremlin: 'contextGremlin',
-  DependencyChain: 'dependencyChain',
 } as const;
 export type EnemyType = typeof EnemyType[keyof typeof EnemyType];
 
@@ -50,19 +49,9 @@ export interface ContextGremlinState extends BaseEnemyState {
   hopCount: number;
 }
 
-export interface DependencyChainState extends BaseEnemyState {
-  type: 'dependencyChain';
-  linksOnBoard: number;
-  lockedOn: boolean;
-  segments: Array<{ row: number; col: number }>;
-  coilDir: 'DL' | 'DR';
-  coilStep: number;
-}
-
 export type EnemyState =
   | HallucinatorState
   | DataSiloState
   | ComplianceTrollState
   | LegacyGoblinState
-  | ContextGremlinState
-  | DependencyChainState;
+  | ContextGremlinState;

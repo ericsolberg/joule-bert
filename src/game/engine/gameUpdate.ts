@@ -2,22 +2,30 @@ import type { GameState } from './gameState';
 import type { EnemyState } from '../entities/enemies/types';
 import type { BonusItem } from '../entities/bonusItem';
 import type { Direction } from '../entities/player';
-import type { HallucinatorState, DataSiloState, ComplianceTrollState, ContextGremlinState, DependencyChainState, LegacyGoblinState } from '../entities/enemies/types';
+import type { HallucinatorState, DataSiloState, ComplianceTrollState, ContextGremlinState, LegacyGoblinState } from '../entities/enemies/types';
 import { GamePhase, createInitialGameState } from './gameState';
 import { TileState } from './boardModel';
 import { DIRECTION_DELTA } from '../entities/player';
 import { EnemyType } from '../entities/enemies/types';
 import { BonusItemType, createBonusItem } from '../entities/bonusItem';
 import { TIMING } from './timing';
-import { scoreTileActivation, scoreCollectBonus, scoreLureDependencyChain, scoreLevelClear, scorePerfectLevel } from './scoring';
-import { getLevelConfig } from '../levels/levelConfig';
+import { scoreTileActivation, scoreCollectBonus, scoreLevelClear, scorePerfectLevel } from './scoring';
 
-import { createHallucinator, tickHallucinator, onLandHallucinator, respawnHallucinator } from '../entities/enemies/hallucinator';
-import { createDataSilo, tickDataSilo, onLandDataSilo, respawnDataSilo } from '../entities/enemies/dataSilo';
-import { createComplianceTroll, tickComplianceTroll, onLandComplianceTroll, respawnComplianceTroll } from '../entities/enemies/complianceTroll';
+import { createHallucinator, tickHallucinator, onLandHallucinator } from '../entities/enemies/hallucinator';
+import { createDataSilo, tickDataSilo, onLandDataSilo } from '../entities/enemies/dataSilo';
+import { createComplianceTroll, tickComplianceTroll, onLandComplianceTroll } from '../entities/enemies/complianceTroll';
 import { createLegacyGoblin, tickLegacyGoblin } from '../entities/enemies/legacyGoblin';
-import { createContextGremlin, tickContextGremlin, respawnContextGremlin } from '../entities/enemies/contextGremlin';
-import { createDependencyChain, tickDependencyChain } from '../entities/enemies/dependencyChain';
+import { createContextGremlin, tickContextGremlin } from '../entities/enemies/contextGremlin';
+
+// ── Global enemy cycle pool (all types, used for cycling across spawns) ──────
+
+const GLOBAL_ENEMY_POOL: EnemyType[] = [
+  EnemyType.Hallucinator,
+  EnemyType.DataSilo,
+  EnemyType.ComplianceTroll,
+  EnemyType.LegacyGoblin,
+  EnemyType.ContextGremlin,
+];
 
 // ── Enemy creation helpers ───────────────────────────────────────────────────
 
@@ -28,7 +36,6 @@ function createEnemyOfType(type: EnemyType, id: string, boardRows: number): Enem
     case EnemyType.ComplianceTroll: return createComplianceTroll(id);
     case EnemyType.LegacyGoblin: return createLegacyGoblin(id, boardRows);
     case EnemyType.ContextGremlin: return createContextGremlin(id);
-    case EnemyType.DependencyChain: return createDependencyChain(id);
   }
 }
 
@@ -37,8 +44,7 @@ function buildEnemyQueue(
   boardRows: number,
   poolIndex: number
 ): { firstEnemy: EnemyState; queue: EnemyType[]; nextPoolIndex: number } {
-  const config = getLevelConfig(level);
-  const pool = config.enemyTypes;
+  const pool = GLOBAL_ENEMY_POOL;
   const maxEnemies = level === 1 ? 1 : 2;
 
   const firstType = pool[poolIndex % pool.length];
@@ -227,24 +233,8 @@ function activateEscapeNode(state: GameState, nodeIdx: number, now: number): Gam
     respawnAt: now + TIMING.ESCAPE_NODE_RESPAWN_MS,
   };
 
-  let score = state.score;
-  let enemies = state.enemies;
-  for (const e of state.enemies) {
-    if (e.type === EnemyType.DependencyChain) {
-      const dist = Math.abs(e.row - state.player.row) + Math.abs(e.col - state.player.col);
-      if (dist <= 1) {
-        score += scoreLureDependencyChain();
-        enemies = enemies.map(en =>
-          en.id === e.id ? { ...en, alive: false, respawnAt: null } : en
-        );
-      }
-    }
-  }
-
   return {
     ...state,
-    score,
-    enemies,
     escapeNodes: nodes,
     player: {
       ...state.player,
@@ -349,17 +339,15 @@ function maybeSpawnNextEnemy(state: GameState, now: number): GameState {
 function tickAllEnemies(state: GameState, now: number): GameState {
   let enemies = state.enemies;
   const board = state.board;
+  const pool = GLOBAL_ENEMY_POOL;
+  let enemyPoolIndex = state.enemyPoolIndex;
 
-  // Respawn dead enemies
+  // Respawn dead enemies using next type from pool
   enemies = enemies.map(e => {
-    if (!e.alive && e.respawnAt !== null && now >= e.respawnAt) {
-      switch (e.type) {
-        case EnemyType.Hallucinator: return respawnHallucinator(e as HallucinatorState, now);
-        case EnemyType.DataSilo: return respawnDataSilo(e as DataSiloState, now);
-        case EnemyType.ComplianceTroll: return respawnComplianceTroll(e as ComplianceTrollState, now);
-        case EnemyType.ContextGremlin: return respawnContextGremlin(e as ContextGremlinState, now);
-        default: return e;
-      }
+    if (!e.alive && !e.isFalling && e.respawnAt !== null && now >= e.respawnAt) {
+      const type = pool[enemyPoolIndex % pool.length];
+      enemyPoolIndex = (enemyPoolIndex + 1) % pool.length;
+      return createEnemyOfType(type, `${type}-${state.level}-r-${now}`, board.rows);
     }
     return e;
   });
@@ -385,9 +373,6 @@ function tickAllEnemies(state: GameState, now: number): GameState {
       case EnemyType.ContextGremlin:
         updated = tickContextGremlin(e as ContextGremlinState, board, state.player, now, state.speedMultiplier);
         break;
-      case EnemyType.DependencyChain:
-        updated = tickDependencyChain(e as DependencyChainState, board, state.player, now, state.speedMultiplier);
-        break;
       default:
         updated = e;
     }
@@ -397,9 +382,8 @@ function tickAllEnemies(state: GameState, now: number): GameState {
       updated = { ...updated, introHops: Math.min(updated.introHops + 1, 3) };
     }
 
-    // 5% chance to jump off an edge when starting a new hop (skip DependencyChain)
-    if (updated.isHopping && !e.isHopping && !updated.hopLeadsFall &&
-        updated.type !== EnemyType.DependencyChain) {
+    // 5% chance to jump off an edge when starting a new hop
+    if (updated.isHopping && !e.isHopping && !updated.hopLeadsFall) {
       const offBoardDirs = Object.values(DIRECTION_DELTA).filter(d =>
         board.isOffBoard(e.row + d.dRow, e.col + d.dCol)
       );
@@ -431,7 +415,7 @@ function tickAllEnemies(state: GameState, now: number): GameState {
     newEnemies.push(updated);
   }
 
-  return { ...state, enemies: newEnemies, board };
+  return { ...state, enemies: newEnemies, board, enemyPoolIndex };
 }
 
 function advanceEnemyHops(state: GameState, delta: number, now: number): GameState {
