@@ -174,6 +174,6 @@ export function drawJouleOnlineText(
   ctx.fillStyle = '#2DD4BF';
   ctx.shadowBlur = 25;
   ctx.shadowColor = '#2DD4BF';
-  ctx.fillText('JOULE ONLINE', canvasW / 2, canvasH / 2);
+  ctx.fillText('JOULE THINKING', canvasW / 2, canvasH / 2);
   ctx.restore();
 }
