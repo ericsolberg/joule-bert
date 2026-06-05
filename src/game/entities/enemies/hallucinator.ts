@@ -21,9 +21,13 @@ export function createHallucinator(id: string): HallucinatorState {
     hopProgress: 0,
     hopFrom: { row: 0, col: 0 },
     hopTo: { row: 0, col: 0 },
+    hopLeadsFall: false,
     lastTickTime: 0,
     alive: true,
     respawnAt: null,
+    isFalling: false,
+    fallProgress: 0,
+    fallSeed: 0,
   };
 }
 
@@ -85,6 +89,9 @@ export function respawnHallucinator(enemy: HallucinatorState, now: number): Hall
     hopProgress: 0,
     hopFrom: { row: 0, col: 0 },
     hopTo: { row: 0, col: 0 },
+    hopLeadsFall: false,
+    isFalling: false,
+    fallProgress: 0,
     lastTickTime: now,
   };
 }

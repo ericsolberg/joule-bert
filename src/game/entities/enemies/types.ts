@@ -17,9 +17,13 @@ export interface BaseEnemyState {
   hopProgress: number;
   hopFrom: { row: number; col: number };
   hopTo: { row: number; col: number };
+  hopLeadsFall: boolean;
   lastTickTime: number;
   alive: boolean;
   respawnAt: number | null;
+  isFalling: boolean;
+  fallProgress: number;
+  fallSeed: number;
 }
 
 export interface HallucinatorState extends BaseEnemyState {

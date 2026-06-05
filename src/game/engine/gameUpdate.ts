@@ -23,20 +23,27 @@ import { createDependencyChain, tickDependencyChain } from '../entities/enemies/
 
 export function spawnEnemiesForLevel(level: number, boardRows: number): EnemyState[] {
   const config = getLevelConfig(level);
-  const enemies: EnemyState[] = [];
-  let idx = 0;
-  for (const type of config.enemyTypes) {
-    const id = `${type}-${level}-${idx++}`;
-    switch (type) {
-      case EnemyType.Hallucinator: enemies.push(createHallucinator(id)); break;
-      case EnemyType.DataSilo: enemies.push(createDataSilo(id)); break;
-      case EnemyType.ComplianceTroll: enemies.push(createComplianceTroll(id)); break;
-      case EnemyType.LegacyGoblin: enemies.push(createLegacyGoblin(id, boardRows)); break;
-      case EnemyType.ContextGremlin: enemies.push(createContextGremlin(id)); break;
-      case EnemyType.DependencyChain: enemies.push(createDependencyChain(id)); break;
-    }
+  const maxEnemies = level === 1 ? 1 : 2;
+
+  // Shuffle the pool and take up to maxEnemies without duplicates
+  const pool = [...config.enemyTypes];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
   }
-  return enemies;
+  const chosen = pool.slice(0, maxEnemies);
+
+  return chosen.map((type, idx) => {
+    const id = `${type}-${level}-${idx}`;
+    switch (type) {
+      case EnemyType.Hallucinator: return createHallucinator(id);
+      case EnemyType.DataSilo: return createDataSilo(id);
+      case EnemyType.ComplianceTroll: return createComplianceTroll(id);
+      case EnemyType.LegacyGoblin: return createLegacyGoblin(id, boardRows);
+      case EnemyType.ContextGremlin: return createContextGremlin(id);
+      case EnemyType.DependencyChain: return createDependencyChain(id);
+    }
+  });
 }
 
 // ── Main update entry point ──────────────────────────────────────────────────
@@ -124,7 +131,8 @@ function updatePlaying(state: GameState, delta: number, now: number, inputDir: D
     }
   }
 
-  s = advanceEnemyHops(s, delta);
+  s = advanceEnemyHops(s, delta, now);
+  s = advanceEnemyFalls(s, delta);
   s = updateTileEffects(s, now);
 
   if (s.tileResetInterval !== null && now - s.lastTileReset > s.tileResetInterval) {
@@ -350,6 +358,22 @@ function tickAllEnemies(state: GameState, now: number): GameState {
         updated = e;
     }
 
+    // 5% chance to jump off an edge when starting a new hop (skip DependencyChain)
+    if (updated.isHopping && !e.isHopping && !updated.hopLeadsFall &&
+        updated.type !== EnemyType.DependencyChain) {
+      const offBoardDirs = Object.values(DIRECTION_DELTA).filter(d =>
+        board.isOffBoard(e.row + d.dRow, e.col + d.dCol)
+      );
+      if (offBoardDirs.length > 0 && Math.random() < 0.05) {
+        const d = offBoardDirs[Math.floor(Math.random() * offBoardDirs.length)];
+        updated = {
+          ...updated,
+          hopTo: { row: e.row + d.dRow, col: e.col + d.dCol },
+          hopLeadsFall: true,
+        };
+      }
+    }
+
     // Apply tile effects when enemy just started a new hop (landed at destination)
     if (updated.isHopping && !e.isHopping) {
       switch (updated.type) {
@@ -371,14 +395,39 @@ function tickAllEnemies(state: GameState, now: number): GameState {
   return { ...state, enemies: newEnemies, board };
 }
 
-function advanceEnemyHops(state: GameState, delta: number): GameState {
+function advanceEnemyHops(state: GameState, delta: number, now: number): GameState {
   const enemies = state.enemies.map(e => {
     if (!e.isHopping) return e;
     const newProgress = e.hopProgress + delta / TIMING.PLAYER_HOP_MS;
     if (newProgress >= 1) {
+      if (e.hopLeadsFall) {
+        return {
+          ...e,
+          isHopping: false,
+          hopProgress: 1,
+          hopLeadsFall: false,
+          alive: false,
+          isFalling: true,
+          fallProgress: 0,
+          fallSeed: now,
+          respawnAt: now + TIMING.DEATH_ANIM_MS + Math.random() * 5000,
+        };
+      }
       return { ...e, isHopping: false, hopProgress: 1 };
     }
     return { ...e, hopProgress: newProgress };
+  });
+  return { ...state, enemies };
+}
+
+function advanceEnemyFalls(state: GameState, delta: number): GameState {
+  const enemies = state.enemies.map(e => {
+    if (!e.isFalling) return e;
+    const newProgress = e.fallProgress + delta / TIMING.DEATH_ANIM_MS;
+    if (newProgress >= 1) {
+      return { ...e, isFalling: false, fallProgress: 1 };
+    }
+    return { ...e, fallProgress: newProgress };
   });
   return { ...state, enemies };
 }

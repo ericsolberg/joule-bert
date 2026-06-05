@@ -22,9 +22,13 @@ export function createComplianceTroll(id: string): ComplianceTrollState {
     hopProgress: 0,
     hopFrom: { row: 0, col: 0 },
     hopTo: { row: 0, col: 0 },
+    hopLeadsFall: false,
     lastTickTime: 0,
     alive: true,
     respawnAt: null,
+    isFalling: false,
+    fallProgress: 0,
+    fallSeed: 0,
   };
 }
 
@@ -54,9 +58,14 @@ export function tickComplianceTroll(
 
   if (bestDirs.length === 0) return { ...enemy, lastTickTime: now };
 
-  const minDist = bestDirs[0].dist;
-  const candidates = bestDirs.filter(d => d.dist === minDist);
-  const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+  let chosen: typeof bestDirs[0];
+  if (Math.random() < 0.30) {
+    chosen = bestDirs[Math.floor(Math.random() * bestDirs.length)];
+  } else {
+    const minDist = bestDirs[0].dist;
+    const candidates = bestDirs.filter(d => d.dist === minDist);
+    chosen = candidates[Math.floor(Math.random() * candidates.length)];
+  }
 
   return {
     ...enemy,
@@ -94,6 +103,9 @@ export function respawnComplianceTroll(enemy: ComplianceTrollState, now: number)
     respawnAt: null,
     isHopping: false,
     hopProgress: 0,
+    hopLeadsFall: false,
+    isFalling: false,
+    fallProgress: 0,
     lastTickTime: now,
   };
 }

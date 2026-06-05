@@ -23,9 +23,13 @@ export function createDependencyChain(id: string): DependencyChainState {
     hopProgress: 0,
     hopFrom: { row: 0, col: 0 },
     hopTo: { row: 0, col: 0 },
+    hopLeadsFall: false,
     lastTickTime: 0,
     alive: true,
     respawnAt: null,
+    isFalling: false,
+    fallProgress: 0,
+    fallSeed: 0,
     linksOnBoard: 1,
     lockedOn: false,
     segments: [{ row: 0, col: 0 }],
@@ -93,9 +97,14 @@ export function tickDependencyChain(
 
     if (bestDirs.length === 0) return { ...enemy, lastTickTime: now };
 
-    const minDist = bestDirs[0].dist;
-    const candidates = bestDirs.filter(d => d.dist === minDist);
-    const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+    let chosen: typeof bestDirs[0];
+    if (Math.random() < 0.30) {
+      chosen = bestDirs[Math.floor(Math.random() * bestDirs.length)];
+    } else {
+      const minDist = bestDirs[0].dist;
+      const candidates = bestDirs.filter(d => d.dist === minDist);
+      chosen = candidates[Math.floor(Math.random() * candidates.length)];
+    }
 
     const newSegments = [{ row: chosen.newRow, col: chosen.newCol }, ...enemy.segments];
     if (newSegments.length > MAX_LINKS) newSegments.pop();

@@ -22,9 +22,13 @@ export function createContextGremlin(id: string): ContextGremlinState {
     hopProgress: 0,
     hopFrom: { row: 0, col: 0 },
     hopTo: { row: 0, col: 0 },
+    hopLeadsFall: false,
     lastTickTime: 0,
     alive: true,
     respawnAt: null,
+    isFalling: false,
+    fallProgress: 0,
+    fallSeed: 0,
     hopCount: 0,
   };
 }
@@ -116,6 +120,9 @@ export function respawnContextGremlin(enemy: ContextGremlinState, now: number): 
     respawnAt: null,
     isHopping: false,
     hopProgress: 0,
+    hopLeadsFall: false,
+    isFalling: false,
+    fallProgress: 0,
     hopCount: 0,
     lastTickTime: now,
   };

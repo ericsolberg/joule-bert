@@ -13,9 +13,13 @@ export function createLegacyGoblin(id: string, boardRows: number): LegacyGoblinS
     hopProgress: 0,
     hopFrom: { row: startRow, col: 0 },
     hopTo: { row: startRow, col: 0 },
+    hopLeadsFall: false,
     lastTickTime: 0,
     alive: true,
     respawnAt: null,
+    isFalling: false,
+    fallProgress: 0,
+    fallSeed: 0,
     patrolDir: 'DR',
   };
 }

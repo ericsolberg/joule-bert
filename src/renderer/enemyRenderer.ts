@@ -15,6 +15,10 @@ export function drawEnemy(
   tileD = 20,
   gap = 0
 ) {
+  if (enemy.isFalling) {
+    drawEnemyFall(ctx, enemy, originX, originY, now, tileW, tileH, tileD, gap);
+    return;
+  }
   if (!enemy.alive) return;
 
   const pos = getEnemyScreenPos(enemy, originX, originY, tileW, tileH, tileD, gap);
@@ -277,6 +281,53 @@ function drawDependencyChain(
     ctx.fill();
 
     ctx.shadowBlur = 0;
+  }
+
+  ctx.restore();
+}
+
+function drawEnemyFall(
+  ctx: CanvasRenderingContext2D,
+  enemy: EnemyState,
+  originX: number,
+  originY: number,
+  now: number,
+  tileW: number,
+  tileH: number,
+  tileD: number,
+  gap: number
+) {
+  const p = enemy.fallProgress;
+  if (p >= 1) return;
+
+  // Fall starts from the off-board hop destination
+  const { x, y } = tileToScreen(enemy.hopTo.row, enemy.hopTo.col, originX, originY, tileW, tileH, tileD, gap);
+  const startX = x;
+  const startY = y + tileH / 2;
+
+  // Quadratic gravity drop, tumble, fade out at the end
+  const fallY = startY + 600 * p * p;
+  const tumble = p * Math.PI * 4;
+  const alpha = p < 0.65 ? 1 : 1 - (p - 0.65) / 0.35;
+
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, alpha);
+  ctx.translate(startX, fallY);
+  ctx.rotate(tumble);
+
+  // Draw the actual enemy character at (0, 0) within the translated context
+  switch (enemy.type) {
+    case EnemyType.Hallucinator:   drawHallucinator(ctx, 0, 0, now); break;
+    case EnemyType.DataSilo:       drawDataSilo(ctx, 0, 0); break;
+    case EnemyType.ComplianceTroll: drawComplianceTroll(ctx, 0, 0, now); break;
+    case EnemyType.LegacyGoblin:   drawLegacyGoblin(ctx, 0, 0, now, p); break;
+    case EnemyType.ContextGremlin: drawContextGremlin(ctx, 0, 0, now); break;
+    default: {
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 12, 8, 0, 0, Math.PI * 2);
+      ctx.fillStyle = '#6B7280';
+      ctx.fill();
+    }
   }
 
   ctx.restore();
