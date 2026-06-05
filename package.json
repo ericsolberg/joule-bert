@@ -8,8 +8,9 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "docker:build": "docker build --platform linux/amd64 -t joule-bert:latest .",
-    "docker:preview": "docker run --rm -p 8080:8080 joule-bert:latest"
+    "docker:build": "docker build --platform linux/amd64 -t ericsolberg/joule-bert:latest .",
+    "docker:preview": "docker run --rm -p 8080:8080 ericsolberg/joule-bert:latest",
+    "docker:push": "docker push ericsolberg/joule-bert:latest"
   },
   "dependencies": {
     "react": "^19.1.0",
