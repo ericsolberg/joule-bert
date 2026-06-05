@@ -30,6 +30,7 @@ export function createDependencyChain(id: string): DependencyChainState {
     isFalling: false,
     fallProgress: 0,
     fallSeed: 0,
+    introHops: 0,
     linksOnBoard: 1,
     lockedOn: false,
     segments: [{ row: 0, col: 0 }],

@@ -24,6 +24,7 @@ export interface BaseEnemyState {
   isFalling: boolean;
   fallProgress: number;
   fallSeed: number;
+  introHops: number;
 }
 
 export interface HallucinatorState extends BaseEnemyState {

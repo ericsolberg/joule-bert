@@ -22,6 +22,7 @@ export function createDataSilo(id: string): DataSiloState {
     isFalling: false,
     fallProgress: 0,
     fallSeed: 0,
+    introHops: 0,
     direction: dir as 'DR' | 'DL',
   };
 }
@@ -96,6 +97,7 @@ export function respawnDataSilo(enemy: DataSiloState, now: number): DataSiloStat
     hopLeadsFall: false,
     isFalling: false,
     fallProgress: 0,
+    introHops: 0,
     lastTickTime: now,
   };
 }

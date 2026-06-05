@@ -20,6 +20,7 @@ export function createLegacyGoblin(id: string, boardRows: number): LegacyGoblinS
     isFalling: false,
     fallProgress: 0,
     fallSeed: 0,
+    introHops: 0,
     patrolDir: 'DR',
   };
 }

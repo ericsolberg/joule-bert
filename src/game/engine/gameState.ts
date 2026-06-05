@@ -1,5 +1,6 @@
 import type { PlayerState } from '../entities/player';
 import type { EnemyState } from '../entities/enemies/types';
+import type { EnemyType } from '../entities/enemies/types';
 import type { BonusItem } from '../entities/bonusItem';
 import { BoardModel } from './boardModel';
 import { createPlayer } from '../entities/player';
@@ -47,6 +48,9 @@ export interface GameState {
   dissolveProgress: number;
   perfectLevel: boolean;
   enemyMovementEnabled: boolean;
+  enemyQueue: EnemyType[];
+  nextEnemyAt: number | null;
+  enemyPoolIndex: number;
 }
 
 export function createEscapeNodes(anchorRow: number): [EscapeNode, EscapeNode] {
@@ -56,7 +60,7 @@ export function createEscapeNodes(anchorRow: number): [EscapeNode, EscapeNode] {
   ];
 }
 
-export function createInitialGameState(level: number, hiScore: number, prevScore: number): GameState {
+export function createInitialGameState(level: number, hiScore: number, prevScore: number, enemyPoolIndex = 0): GameState {
   const config = getLevelConfig(level);
   const board = new BoardModel(config.rows);
   const anchorRow = Math.max(1, Math.floor(config.rows / 3));
@@ -83,5 +87,8 @@ export function createInitialGameState(level: number, hiScore: number, prevScore
     dissolveProgress: 0,
     perfectLevel: true,
     enemyMovementEnabled: false,
+    enemyQueue: [],
+    nextEnemyAt: null,
+    enemyPoolIndex,
   };
 }

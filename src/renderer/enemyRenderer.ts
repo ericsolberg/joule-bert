@@ -1,5 +1,14 @@
 import type { EnemyState, DependencyChainState } from '../game/entities/enemies/types';
 import { EnemyType } from '../game/entities/enemies/types';
+
+const ENEMY_NAMES: Record<EnemyType, string> = {
+  [EnemyType.Hallucinator]: 'Hallucinator',
+  [EnemyType.DataSilo]: 'Data Silo',
+  [EnemyType.ComplianceTroll]: 'Compliance Troll',
+  [EnemyType.LegacyGoblin]: 'Legacy Goblin',
+  [EnemyType.ContextGremlin]: 'Context Gremlin',
+  [EnemyType.DependencyChain]: 'Dependency Chain',
+};
 import { tileToScreen } from '../game/engine/boardModel';
 import { hopArcOffset } from '../game/engine/physics';
 import { TIMING } from '../game/engine/timing';
@@ -43,6 +52,33 @@ export function drawEnemy(
       drawDependencyChain(ctx, enemy as DependencyChainState, originX, originY, now, tileW, tileH, tileD, gap);
       break;
   }
+
+  if (enemy.introHops < 3) {
+    drawEnemyNameLabel(ctx, pos.x, pos.y, ENEMY_NAMES[enemy.type]);
+  }
+}
+
+function drawEnemyNameLabel(ctx: CanvasRenderingContext2D, cx: number, cy: number, name: string) {
+  ctx.save();
+  ctx.font = 'bold 11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+
+  const metrics = ctx.measureText(name);
+  const padX = 6, padY = 4;
+  const boxW = metrics.width + padX * 2;
+  const boxH = 15 + padY * 2;
+  const boxX = cx - boxW / 2;
+  const boxY = cy - 46 - boxH;
+
+  ctx.fillStyle = 'rgba(10,10,30,0.75)';
+  ctx.beginPath();
+  ctx.roundRect(boxX, boxY, boxW, boxH, 4);
+  ctx.fill();
+
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  ctx.fillText(name, cx, cy - 46);
+  ctx.restore();
 }
 
 function getEnemyScreenPos(

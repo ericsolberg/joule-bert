@@ -19,31 +19,36 @@ import { createLegacyGoblin, tickLegacyGoblin } from '../entities/enemies/legacy
 import { createContextGremlin, tickContextGremlin, respawnContextGremlin } from '../entities/enemies/contextGremlin';
 import { createDependencyChain, tickDependencyChain } from '../entities/enemies/dependencyChain';
 
-// ── Spawn enemies for a level ────────────────────────────────────────────────
+// ── Enemy creation helpers ───────────────────────────────────────────────────
 
-export function spawnEnemiesForLevel(level: number, boardRows: number): EnemyState[] {
+function createEnemyOfType(type: EnemyType, id: string, boardRows: number): EnemyState {
+  switch (type) {
+    case EnemyType.Hallucinator: return createHallucinator(id);
+    case EnemyType.DataSilo: return createDataSilo(id);
+    case EnemyType.ComplianceTroll: return createComplianceTroll(id);
+    case EnemyType.LegacyGoblin: return createLegacyGoblin(id, boardRows);
+    case EnemyType.ContextGremlin: return createContextGremlin(id);
+    case EnemyType.DependencyChain: return createDependencyChain(id);
+  }
+}
+
+function buildEnemyQueue(
+  level: number,
+  boardRows: number,
+  poolIndex: number
+): { firstEnemy: EnemyState; queue: EnemyType[]; nextPoolIndex: number } {
   const config = getLevelConfig(level);
+  const pool = config.enemyTypes;
   const maxEnemies = level === 1 ? 1 : 2;
 
-  // Shuffle the pool and take up to maxEnemies without duplicates
-  const pool = [...config.enemyTypes];
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
-  const chosen = pool.slice(0, maxEnemies);
+  const firstType = pool[poolIndex % pool.length];
+  const firstEnemy = createEnemyOfType(firstType, `${firstType}-${level}-0`, boardRows);
 
-  return chosen.map((type, idx) => {
-    const id = `${type}-${level}-${idx}`;
-    switch (type) {
-      case EnemyType.Hallucinator: return createHallucinator(id);
-      case EnemyType.DataSilo: return createDataSilo(id);
-      case EnemyType.ComplianceTroll: return createComplianceTroll(id);
-      case EnemyType.LegacyGoblin: return createLegacyGoblin(id, boardRows);
-      case EnemyType.ContextGremlin: return createContextGremlin(id);
-      case EnemyType.DependencyChain: return createDependencyChain(id);
-    }
-  });
+  let nextPoolIndex = (poolIndex + 1) % pool.length;
+  const queue: EnemyType[] = maxEnemies > 1 ? [pool[nextPoolIndex]] : [];
+  if (queue.length > 0) nextPoolIndex = (nextPoolIndex + 1) % pool.length;
+
+  return { firstEnemy, queue, nextPoolIndex };
 }
 
 // ── Main update entry point ──────────────────────────────────────────────────
@@ -113,13 +118,19 @@ function updatePlaying(state: GameState, delta: number, now: number, inputDir: D
   if (!s.enemyMovementEnabled) {
     const delay = s.level === 1 ? TIMING.ENEMY_DELAY_LEVEL1_MS : TIMING.ENEMY_DELAY_MS;
     if (now - s.levelStartTime >= delay) {
+      const { firstEnemy, queue, nextPoolIndex } = buildEnemyQueue(s.level, s.board.rows, s.enemyPoolIndex);
       s = {
         ...s,
         enemyMovementEnabled: true,
-        enemies: spawnEnemiesForLevel(s.level, s.board.rows),
+        enemies: [firstEnemy],
+        enemyQueue: queue,
+        nextEnemyAt: queue.length > 0 ? now + TIMING.ENEMY_STAGGER_MS : null,
+        enemyPoolIndex: nextPoolIndex,
       };
     }
   }
+
+  s = maybeSpawnNextEnemy(s, now);
 
   if (s.enemyMovementEnabled) {
     const frozen = s.allEnemiesFrozenUntil !== null && now <= s.allEnemiesFrozenUntil;
@@ -310,6 +321,29 @@ function activateTileOnLanding(state: GameState, now: number): GameState {
   };
 }
 
+function maybeSpawnNextEnemy(state: GameState, now: number): GameState {
+  if (state.enemyQueue.length === 0 || state.nextEnemyAt === null) return state;
+  if (now < state.nextEnemyAt) return state;
+
+  // Drop permanently dead enemies (no respawn, not falling) to make room
+  const liveEnemies = state.enemies.filter(e => e.alive || e.isFalling || e.respawnAt !== null);
+  const maxEnemies = state.level === 1 ? 1 : 2;
+  if (liveEnemies.length >= maxEnemies) {
+    return { ...state, enemies: liveEnemies, nextEnemyAt: now + 3000 };
+  }
+
+  const [type, ...rest] = state.enemyQueue;
+  const id = `${type}-${state.level}-q-${now}`;
+  const newEnemy = createEnemyOfType(type, id, state.board.rows);
+
+  return {
+    ...state,
+    enemies: [...liveEnemies, newEnemy],
+    enemyQueue: rest,
+    nextEnemyAt: rest.length > 0 ? now + TIMING.ENEMY_STAGGER_MS : null,
+  };
+}
+
 // ── Enemy ticking ────────────────────────────────────────────────────────────
 
 function tickAllEnemies(state: GameState, now: number): GameState {
@@ -356,6 +390,11 @@ function tickAllEnemies(state: GameState, now: number): GameState {
         break;
       default:
         updated = e;
+    }
+
+    // Increment introHops counter when a new hop starts
+    if (updated.isHopping && !e.isHopping) {
+      updated = { ...updated, introHops: Math.min(updated.introHops + 1, 3) };
     }
 
     // 5% chance to jump off an edge when starting a new hop (skip DependencyChain)
@@ -641,7 +680,7 @@ function updateLevelClear(state: GameState, delta: number): GameState {
   }
 
   if (newClearProgress >= 1) {
-    return createInitialGameState(state.level + 1, Math.max(state.score, state.hiScore), state.score);
+    return createInitialGameState(state.level + 1, Math.max(state.score, state.hiScore), state.score, state.enemyPoolIndex);
   }
 
   return {

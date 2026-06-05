@@ -28,6 +28,7 @@ export function createHallucinator(id: string): HallucinatorState {
     isFalling: false,
     fallProgress: 0,
     fallSeed: 0,
+    introHops: 0,
   };
 }
 
@@ -92,6 +93,7 @@ export function respawnHallucinator(enemy: HallucinatorState, now: number): Hall
     hopLeadsFall: false,
     isFalling: false,
     fallProgress: 0,
+    introHops: 0,
     lastTickTime: now,
   };
 }

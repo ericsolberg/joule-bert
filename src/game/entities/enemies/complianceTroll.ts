@@ -29,6 +29,7 @@ export function createComplianceTroll(id: string): ComplianceTrollState {
     isFalling: false,
     fallProgress: 0,
     fallSeed: 0,
+    introHops: 0,
   };
 }
 
@@ -106,6 +107,7 @@ export function respawnComplianceTroll(enemy: ComplianceTrollState, now: number)
     hopLeadsFall: false,
     isFalling: false,
     fallProgress: 0,
+    introHops: 0,
     lastTickTime: now,
   };
 }
