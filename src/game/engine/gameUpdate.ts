@@ -87,6 +87,22 @@ function updatePlaying(state: GameState, delta: number, now: number, inputDir: D
   s = advancePlayerHop(s, delta, now);
   s = advanceEscapeNodeAnims(s, delta, now);
 
+  if (s.player.isEscaping) {
+    const node = s.escapeNodes[s.player.escapingNodeIdx];
+    if (!node.animating) {
+      s = {
+        ...s,
+        player: {
+          ...s.player,
+          row: 0,
+          col: 0,
+          isEscaping: false,
+          animState: 'idle',
+        },
+      };
+    }
+  }
+
   if (!s.enemyMovementEnabled) {
     const delay = s.level === 1 ? TIMING.ENEMY_DELAY_LEVEL1_MS : TIMING.ENEMY_DELAY_MS;
     if (now - s.levelStartTime >= delay) {
@@ -213,12 +229,12 @@ function activateEscapeNode(state: GameState, nodeIdx: number, now: number): Gam
     escapeNodes: nodes,
     player: {
       ...state.player,
-      row: 0,
-      col: 0,
       isHopping: false,
       hopProgress: 0,
       animState: 'idle',
       queuedDirection: null,
+      isEscaping: true,
+      escapingNodeIdx: nodeIdx,
     },
   };
 }

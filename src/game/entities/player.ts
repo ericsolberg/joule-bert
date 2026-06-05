@@ -21,6 +21,8 @@ export interface PlayerState {
   victoryProgress: number;
   queuedDirection: Direction | null;
   deathSeed: number;
+  isEscaping: boolean;
+  escapingNodeIdx: number;
 }
 
 export function createPlayer(): PlayerState {
@@ -38,5 +40,7 @@ export function createPlayer(): PlayerState {
     victoryProgress: 0,
     queuedDirection: null,
     deathSeed: 0,
+    isEscaping: false,
+    escapingNodeIdx: 0,
   };
 }

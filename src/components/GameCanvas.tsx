@@ -204,7 +204,23 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
     }
 
     if (state.phase !== GamePhase.LevelIntro || state.introProgress >= 1) {
-      const playerPos = getPlayerScreenPos(state.player, originX, originY, tileW, tileH, tileD, TILE_GAP);
+      let playerPos = getPlayerScreenPos(state.player, originX, originY, tileW, tileH, tileD, TILE_GAP);
+
+      if (state.player.isEscaping) {
+        const node = state.escapeNodes[state.player.escapingNodeIdx];
+        const anchorCol = node.side === 'left' ? 0 : node.anchorRow;
+        const nodeBase = tileToScreen(node.anchorRow, anchorCol, originX, originY, tileW, tileH, tileD, TILE_GAP);
+        const startX = node.side === 'left' ? nodeBase.x - tileW - 50 : nodeBase.x + tileW + 50;
+        const startY = nodeBase.y + tileH / 2 + 80;
+        const topPos = tileToScreen(0, 0, originX, originY, tileW, tileH, tileD, TILE_GAP);
+        const endX = topPos.x;
+        const endY = topPos.y + tileH / 2;
+        // Smoothstep easing so arrival feels like landing
+        const p = node.animProgress;
+        const ep = p * p * (3 - 2 * p);
+        playerPos = { x: startX + (endX - startX) * ep, y: startY + (endY - startY) * ep };
+      }
+
       drawPlayer(ctx, state.player, playerPos.x, playerPos.y, now, reduceMotion, jouleImageRef.current);
     }
 
