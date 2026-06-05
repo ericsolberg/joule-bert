@@ -13,7 +13,7 @@ export function drawPlayer(
   jouleImage: HTMLImageElement | null = null
 ) {
   if (player.animState === 'dead') {
-    drawDeathAnim(ctx, player, screenX, screenY);
+    drawDeathAnim(ctx, player, screenX, screenY, jouleImage);
     return;
   }
 
@@ -119,36 +119,25 @@ function drawDeathAnim(
   ctx: CanvasRenderingContext2D,
   player: PlayerState,
   cx: number,
-  cy: number
+  cy: number,
+  jouleImage: HTMLImageElement | null
 ) {
-  const progress = player.deathProgress;
-  if (progress >= 1) return;
+  const p = player.deathProgress;
+  if (p >= 1) return;
 
-  const seed = player.deathSeed;
-  const numFragments = 8;
+  // Quadratic drop simulates gravity
+  const fallY = cy + 500 * p * p;
+  // Tumble: 2 full rotations over the fall
+  const tumble = p * Math.PI * 4;
+  // Fade out over the last 35%
+  const alpha = p < 0.65 ? 1 : 1 - (p - 0.65) / 0.35;
 
-  for (let i = 0; i < numFragments; i++) {
-    const angle = (i / numFragments) * Math.PI * 2 + ((seed * 0.001 + i * 0.37) % 1) * 0.5;
-    const speed = 40 + ((seed + i * 13) % 30);
-    const fragX = cx + Math.cos(angle) * speed * progress;
-    const fragY = (cy - 18) + Math.sin(angle) * speed * progress + 60 * progress * progress;
-    const fragAlpha = 1 - progress;
-    const fragSize = 5 * (1 - progress * 0.7);
-
-    ctx.save();
-    ctx.globalAlpha = fragAlpha;
-    ctx.translate(fragX, fragY);
-    ctx.rotate(angle + progress * Math.PI * 2);
-
-    ctx.beginPath();
-    ctx.moveTo(0, -fragSize);
-    ctx.lineTo(fragSize, fragSize);
-    ctx.lineTo(-fragSize, fragSize);
-    ctx.closePath();
-    ctx.fillStyle = '#8B5CF6';
-    ctx.fill();
-    ctx.restore();
-  }
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, alpha);
+  ctx.translate(cx, fallY - 18);
+  ctx.rotate(tumble);
+  drawGem(ctx, 0, 0, jouleImage);
+  ctx.restore();
 }
 
 export function getPlayerScreenPos(

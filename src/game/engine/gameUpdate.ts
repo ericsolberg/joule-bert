@@ -163,9 +163,7 @@ function startHop(state: GameState, dir: Direction, now: number): GameState {
     }
   }
 
-  if (state.board.isOffBoard(newRow, newCol)) {
-    return triggerDeath(state, now);
-  }
+  const offBoard = state.board.isOffBoard(newRow, newCol);
 
   return {
     ...state,
@@ -175,6 +173,7 @@ function startHop(state: GameState, dir: Direction, now: number): GameState {
       hopProgress: 0,
       hopFrom: { row: player.row, col: player.col },
       hopTo: { row: newRow, col: newCol },
+      hopOffBoard: offBoard,
       row: newRow,
       col: newCol,
       animState: 'hopping',
@@ -231,12 +230,17 @@ function advancePlayerHop(state: GameState, delta: number, now: number): GameSta
   const newProgress = player.hopProgress + delta / TIMING.PLAYER_HOP_MS;
 
   if (newProgress >= 1) {
+    if (player.hopOffBoard) {
+      return triggerDeath(state, now);
+    }
+
     let s: GameState = {
       ...state,
       player: {
         ...player,
         isHopping: false,
         hopProgress: 1,
+        hopOffBoard: false,
         animState: 'idle',
       },
     };

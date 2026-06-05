@@ -15,6 +15,7 @@ export interface PlayerState {
   hopProgress: number;
   hopFrom: { row: number; col: number };
   hopTo: { row: number; col: number };
+  hopOffBoard: boolean;
   animState: 'idle' | 'hopping' | 'dead' | 'victory';
   deathProgress: number;
   victoryProgress: number;
@@ -31,6 +32,7 @@ export function createPlayer(): PlayerState {
     hopProgress: 0,
     hopFrom: { row: 0, col: 0 },
     hopTo: { row: 0, col: 0 },
+    hopOffBoard: false,
     animState: 'idle',
     deathProgress: 0,
     victoryProgress: 0,
