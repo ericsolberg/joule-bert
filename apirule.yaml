@@ -1,0 +1,16 @@
+apiVersion: gateway.kyma-project.io/v2
+kind: APIRule
+metadata:
+  name: joule-bert
+  namespace: joule-bert
+spec:
+  gateway: kyma-system/kyma-gateway
+  hosts:
+    - joule-bert
+  service:
+    name: joule-bert-svc
+    port: 80
+  rules:
+    - path: /*
+      methods: ["GET", "HEAD", "OPTIONS"]
+      noAuth: true

@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: joule-bert
+  namespace: joule-bert
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: joule-bert
+  template:
+    metadata:
+      labels:
+        app: joule-bert
+    spec:
+      containers:
+        - name: joule-bert
+          image: ericsolberg/joule-bert:latest  # <-- your Docker Hub image
+          ports:
+            - containerPort: 8080  # or whatever port your app listens on
