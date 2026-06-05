@@ -65,13 +65,12 @@ function updateLevelIntro(state: GameState, delta: number, now: number): GameSta
   const newProgress = Math.min(1, state.introProgress + delta / totalIntroMs);
 
   if (newProgress >= 1) {
-    const enemies = spawnEnemiesForLevel(state.level, state.board.rows);
     return {
       ...state,
       phase: GamePhase.Playing,
       introProgress: 1,
       levelStartTime: now,
-      enemies,
+      enemies: [],
       enemyMovementEnabled: false,
     };
   }
@@ -87,6 +86,17 @@ function updatePlaying(state: GameState, delta: number, now: number, inputDir: D
   s = processInput(s, inputDir, now);
   s = advancePlayerHop(s, delta, now);
   s = advanceEscapeNodeAnims(s, delta, now);
+
+  if (!s.enemyMovementEnabled) {
+    const delay = s.level === 1 ? TIMING.ENEMY_DELAY_LEVEL1_MS : TIMING.ENEMY_DELAY_MS;
+    if (now - s.levelStartTime >= delay) {
+      s = {
+        ...s,
+        enemyMovementEnabled: true,
+        enemies: spawnEnemiesForLevel(s.level, s.board.rows),
+      };
+    }
+  }
 
   if (s.enemyMovementEnabled) {
     const frozen = s.allEnemiesFrozenUntil !== null && now <= s.allEnemiesFrozenUntil;
@@ -123,22 +133,17 @@ function processInput(state: GameState, inputDir: Direction | null, now: number)
   if (!inputDir) return state;
 
   const player = state.player;
-  const enableMovement = !state.enemyMovementEnabled;
 
   if (player.isHopping) {
-    return {
-      ...state,
-      enemyMovementEnabled: state.enemyMovementEnabled || enableMovement,
-      player: { ...player, queuedDirection: inputDir },
-    };
+    return { ...state, player: { ...player, queuedDirection: inputDir } };
   }
 
   if (player.animState === 'dead' || player.animState === 'victory') return state;
 
-  return startHop(state, inputDir, now, enableMovement);
+  return startHop(state, inputDir, now);
 }
 
-function startHop(state: GameState, dir: Direction, now: number, enableMovement: boolean): GameState {
+function startHop(state: GameState, dir: Direction, now: number): GameState {
   const player = state.player;
   const delta = DIRECTION_DELTA[dir];
   const newRow = player.row + delta.dRow;
@@ -149,12 +154,12 @@ function startHop(state: GameState, dir: Direction, now: number, enableMovement:
 
   if (leftNode.active && !leftNode.animating) {
     if (newRow === leftNode.anchorRow && newCol === -1) {
-      return activateEscapeNode(state, 0, now, enableMovement);
+      return activateEscapeNode(state, 0, now);
     }
   }
   if (rightNode.active && !rightNode.animating) {
     if (newRow === rightNode.anchorRow && newCol === rightNode.anchorRow + 1) {
-      return activateEscapeNode(state, 1, now, enableMovement);
+      return activateEscapeNode(state, 1, now);
     }
   }
 
@@ -164,7 +169,6 @@ function startHop(state: GameState, dir: Direction, now: number, enableMovement:
 
   return {
     ...state,
-    enemyMovementEnabled: state.enemyMovementEnabled || enableMovement,
     player: {
       ...player,
       isHopping: true,
@@ -179,7 +183,7 @@ function startHop(state: GameState, dir: Direction, now: number, enableMovement:
   };
 }
 
-function activateEscapeNode(state: GameState, nodeIdx: number, now: number, enableMovement: boolean): GameState {
+function activateEscapeNode(state: GameState, nodeIdx: number, now: number): GameState {
   const nodes: typeof state.escapeNodes = [{ ...state.escapeNodes[0] }, { ...state.escapeNodes[1] }];
   nodes[nodeIdx] = {
     ...nodes[nodeIdx],
@@ -208,7 +212,6 @@ function activateEscapeNode(state: GameState, nodeIdx: number, now: number, enab
     score,
     enemies,
     escapeNodes: nodes,
-    enemyMovementEnabled: state.enemyMovementEnabled || enableMovement,
     player: {
       ...state.player,
       row: 0,
@@ -241,7 +244,7 @@ function advancePlayerHop(state: GameState, delta: number, now: number): GameSta
     s = activateTileOnLanding(s, now);
 
     if (player.queuedDirection) {
-      s = startHop(s, player.queuedDirection, now, false);
+      s = startHop(s, player.queuedDirection, now);
     }
 
     return s;
