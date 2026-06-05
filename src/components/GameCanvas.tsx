@@ -55,6 +55,14 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
     jouleImageRef.current = img;
   }, []);
 
+  // Escape node image
+  const escapeNodeImageRef = useRef<HTMLImageElement | null>(null);
+  useEffect(() => {
+    const img = new Image();
+    img.src = '/escapenode.png';
+    escapeNodeImageRef.current = img;
+  }, []);
+
   // Preload sounds and play level-start for the first level
   useEffect(() => {
     Promise.all([
@@ -169,11 +177,11 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
       let nx: number, ny: number;
 
       if (node.side === 'left') {
-        nx = base.x - tileW;
-        ny = base.y + tileH / 2;
+        nx = base.x - tileW - 50;
+        ny = base.y + tileH / 2 + 80;
       } else {
-        nx = base.x + tileW;
-        ny = base.y + tileH / 2;
+        nx = base.x + tileW + 50;
+        ny = base.y + tileH / 2 + 80;
       }
 
       if (node.animating) {
@@ -186,7 +194,7 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
         ny = ny + (ty - ny) * ep;
       }
 
-      drawEscapeNode(ctx, nx, ny, node.active, node.animating, node.animProgress, node.respawnAt, now);
+      drawEscapeNode(ctx, nx, ny, node.active, node.animating, node.animProgress, node.respawnAt, now, escapeNodeImageRef.current);
     }
 
     drawBonusItems(ctx, state.bonusItems, originX, originY, now, tileW, tileH, tileD, TILE_GAP);

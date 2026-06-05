@@ -253,11 +253,11 @@ export function drawEscapeNode(
   animating: boolean,
   animProgress: number,
   respawnAt: number | null,
-  now: number
+  now: number,
+  image: HTMLImageElement | null = null
 ) {
-  const w = 36;
-  const h = 22;
-  const r = 8;
+  const imgW = 75;
+  const imgH = 18;
 
   let alpha = active ? 1 : 0.35;
   if (animating) alpha = 1 - animProgress;
@@ -265,39 +265,31 @@ export function drawEscapeNode(
   ctx.save();
   ctx.globalAlpha = alpha;
 
-  ctx.beginPath();
-  ctx.moveTo(x - w / 2 + r, y - h / 2);
-  ctx.lineTo(x + w / 2 - r, y - h / 2);
-  ctx.arcTo(x + w / 2, y - h / 2, x + w / 2, y - h / 2 + r, r);
-  ctx.lineTo(x + w / 2, y + h / 2 - r);
-  ctx.arcTo(x + w / 2, y + h / 2, x + w / 2 - r, y + h / 2, r);
-  ctx.lineTo(x - w / 2 + r, y + h / 2);
-  ctx.arcTo(x - w / 2, y + h / 2, x - w / 2, y + h / 2 - r, r);
-  ctx.lineTo(x - w / 2, y - h / 2 + r);
-  ctx.arcTo(x - w / 2, y - h / 2, x - w / 2 + r, y - h / 2, r);
-  ctx.closePath();
-  ctx.fillStyle = '#0A0A1A';
-  ctx.fill();
-  ctx.strokeStyle = '#2DD4BF';
-  ctx.lineWidth = 2;
-  ctx.stroke();
+  if (image && image.complete && image.naturalWidth > 0) {
+    ctx.drawImage(image, x - imgW / 2, y - imgH / 2, imgW, imgH);
+  } else {
+    // Fallback: simple rounded pill
+    const r = imgH / 2;
+    ctx.beginPath();
+    ctx.moveTo(x - imgW / 2 + r, y - imgH / 2);
+    ctx.arcTo(x + imgW / 2, y - imgH / 2, x + imgW / 2, y + imgH / 2, r);
+    ctx.arcTo(x + imgW / 2, y + imgH / 2, x - imgW / 2, y + imgH / 2, r);
+    ctx.arcTo(x - imgW / 2, y + imgH / 2, x - imgW / 2, y - imgH / 2, r);
+    ctx.arcTo(x - imgW / 2, y - imgH / 2, x + imgW / 2, y - imgH / 2, r);
+    ctx.closePath();
+    ctx.fillStyle = '#8B5CF6';
+    ctx.fill();
+  }
 
   // Respawn progress arc
   if (!active && !animating && respawnAt !== null) {
     const frac = Math.max(0, 1 - (respawnAt - now) / 8000);
     ctx.beginPath();
-    ctx.arc(x, y, w / 2 - 2, -Math.PI / 2, -Math.PI / 2 + frac * Math.PI * 2);
+    ctx.arc(x, y, imgW / 2, -Math.PI / 2, -Math.PI / 2 + frac * Math.PI * 2);
     ctx.strokeStyle = '#2DD4BF';
     ctx.lineWidth = 2;
     ctx.stroke();
   }
-
-  // Cloud icon
-  ctx.fillStyle = '#2DD4BF';
-  ctx.beginPath(); ctx.arc(x - 7, y + 2, 4, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(x,     y - 1, 5, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(x + 7, y + 2, 4, 0, Math.PI * 2); ctx.fill();
-  ctx.fillRect(x - 11, y + 2, 22, 4);
 
   ctx.restore();
 }
