@@ -108,6 +108,7 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
     Promise.all([
       soundManager.load('jump', '/jump.mp3'),
       soundManager.load('enemy-jump-2', '/enemy-jump-2.mp3'),
+      soundManager.load('enemy-fall', '/enemy-fall.mp3'),
       soundManager.load('lift', '/lift.mp3'),
       soundManager.load('level-start', '/level-start.mp3'),
       soundManager.load('victory', '/victory.mp3'),
@@ -148,7 +149,7 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
         soundManager.play('enemy-jump-2', 0.6);
       }
       if (next.isFalling && !prev?.isFalling) {
-        soundManager.play('fall', 0.5);
+        soundManager.play('enemy-fall', 0.5);
       }
     }
     if (newState.player.animState === 'dead' && state.player.animState !== 'dead') {
