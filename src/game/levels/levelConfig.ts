@@ -72,7 +72,7 @@ export function getLevelConfig(level: number): LevelConfig {
       EnemyType.LegacyGoblin,
       EnemyType.ContextGremlin,
     ],
-    enemySpeedMultiplier: 1.15 + 0.05 * (level - 5),
+    enemySpeedMultiplier: Math.min(1.5, 1.15 + 0.05 * (level - 5)),
     tileResetInterval: 30000,
   };
 }

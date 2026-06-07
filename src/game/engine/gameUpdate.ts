@@ -1,3 +1,7 @@
+// ── Dev flags ────────────────────────────────────────────────────────────────
+const UNLIMITED_LIVES = false; // set to true for testing
+// ─────────────────────────────────────────────────────────────────────────────
+
 import type { GameState } from './gameState';
 import type { EnemyState } from '../entities/enemies/types';
 import type { BonusItem } from '../entities/bonusItem';
@@ -110,6 +114,7 @@ function updateLevelIntro(state: GameState, delta: number, now: number): GameSta
       phase: GamePhase.Playing,
       introProgress: 1,
       levelStartTime: now,
+      lastTileReset: now,
       enemies: [],
       enemyMovementEnabled: false,
     };
@@ -510,6 +515,7 @@ function resetSomeTiles(state: GameState, now: number): GameState {
       }
     }
   }
+  if (activatedPositions.length === 0) return state;
   const count = Math.max(1, Math.floor(activatedPositions.length / 3));
   for (let i = activatedPositions.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -607,7 +613,7 @@ function collectBonusItem(state: GameState, item: BonusItem, now: number): GameS
 }
 
 function triggerDeath(state: GameState, now: number): GameState {
-  const newLives = state.player.lives - 1;
+  const newLives = UNLIMITED_LIVES ? state.player.lives : state.player.lives - 1;
   return {
     ...state,
     phase: GamePhase.PlayerDead,

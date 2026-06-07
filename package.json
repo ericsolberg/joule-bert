@@ -8,9 +8,11 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "docker:build": "docker build --platform linux/amd64 -t ericsolberg/joule-bert:latest .",
     "docker:preview": "docker run --rm -p 8080:8080 ericsolberg/joule-bert:latest",
-    "docker:push": "docker push ericsolberg/joule-bert:latest"
+    "docker:build": "docker build --platform linux/amd64 -t ericsolberg/joule-bert:$npm_package_version -t ericsolberg/joule-bert:latest .",
+    "docker:push": "docker push ericsolberg/joule-bert:$npm_package_version && docker push ericsolberg/joule-bert:latest",
+    "kyma:update": "kubectl -n joule-bert set image deployment/joule-bert joule-bert=ericsolberg/joule-bert:$npm_package_version && kubectl -n joule-bert rollout status deployment/joule-bert",
+    "deploy": "npm run docker:build && npm run docker:push && npm run kyma:update"
   },
   "dependencies": {
     "react": "^19.1.0",
