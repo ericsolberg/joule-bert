@@ -122,7 +122,15 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
 
   const update = useCallback((deltaMs: number, now: number) => {
     const state = stateRef.current;
-    if (state.phase === GamePhase.Paused || state.phase === GamePhase.GameOver) return;
+    if (state.phase === GamePhase.GameOver) return;
+
+    if (state.phase === GamePhase.Paused) {
+      if (consumePause()) {
+        stateRef.current = { ...state, phase: GamePhase.Playing };
+        setPhase(GamePhase.Playing);
+      }
+      return;
+    }
 
     if (consumePause()) {
       if (state.phase === GamePhase.Playing) {
@@ -178,19 +186,7 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
     }
   }, [consumeDirection, consumePause, hiScore, hasMoved, onHiScoreUpdate, onGameOver]);
 
-  // Handle un-pause from paused state
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if ((e.code === 'Escape' || e.code === 'KeyP') && stateRef.current.phase === GamePhase.Paused) {
-        stateRef.current = { ...stateRef.current, phase: GamePhase.Playing };
-        setPhase(GamePhase.Playing);
-      }
-    }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
-
-  const render = useCallback(() => {
+const render = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -310,7 +306,7 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
   useGameLoop(
     update,
     render,
-    phase !== GamePhase.Paused && phase !== GamePhase.GameOver
+    phase !== GamePhase.GameOver
   );
 
   const state = stateRef.current;
