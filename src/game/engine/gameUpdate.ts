@@ -561,6 +561,7 @@ function updateBonusItems(state: GameState, now: number): GameState {
 
 function checkCollisions(state: GameState, now: number): GameState {
   if (state.player.animState === 'dead') return state;
+  if (state.player.isEscaping) return state;
 
   let s = state;
 

@@ -245,10 +245,13 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
         const topPos = tileToScreen(0, 0, originX, originY, tileW, tileH, tileD, TILE_GAP);
         const tx = topPos.x;
         const ty = topPos.y + tileH / 2;
-        const p = node.animProgress;
-        const ep = p * p * (3 - 2 * p);
-        nx = nx + (tx - nx) * ep;
-        ny = ny + (ty - ny) * ep;
+        const ep = node.animProgress * node.animProgress * (3 - 2 * node.animProgress);
+        // Quadratic bezier: control point directly above start (same X, destination Y)
+        // keeps the arc outside the board instead of crossing over it
+        const bx = nx * (1 - ep * ep) + tx * ep * ep;
+        const by = (1 - ep) * (1 - ep) * ny + ty * ep * (2 - ep);
+        nx = bx;
+        ny = by;
       }
 
       drawEscapeNode(ctx, nx, ny, node.active, node.animating, node.animProgress, node.respawnAt, now, escapeNodeImageRef.current);
@@ -272,10 +275,12 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
         const topPos = tileToScreen(0, 0, originX, originY, tileW, tileH, tileD, TILE_GAP);
         const endX = topPos.x;
         const endY = topPos.y + tileH / 2;
-        // Smoothstep easing so arrival feels like landing
+        // Quadratic bezier arc matching escape node animation — arcs outside the board
         const p = node.animProgress;
         const ep = p * p * (3 - 2 * p);
-        playerPos = { x: startX + (endX - startX) * ep, y: startY + (endY - startY) * ep };
+        const bx = startX * (1 - ep * ep) + endX * ep * ep;
+        const by = (1 - ep) * (1 - ep) * startY + endY * ep * (2 - ep);
+        playerPos = { x: bx, y: by };
       }
 
       drawPlayer(ctx, state.player, playerPos.x, playerPos.y, now, reduceMotion, jouleImageRef.current);
