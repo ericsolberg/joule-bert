@@ -16,7 +16,8 @@ class SoundManager {
   unlock(): void {
     if (!this.ctx) {
       this.ctx = new AudioContext();
-    } else if (this.ctx.state === 'suspended') {
+    }
+    if (this.ctx.state === 'suspended') {
       void this.ctx.resume();
     }
     for (const [id, raw] of this.pending) {
