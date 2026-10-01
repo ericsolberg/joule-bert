@@ -4,6 +4,7 @@ import { StartScreen } from './components/StartScreen';
 import { IntroScreen } from './components/IntroScreen';
 import { GameOverScreen } from './components/GameOverScreen';
 import { useLocalStorage } from './hooks/useLocalStorage';
+import { soundManager } from './audio/soundManager';
 
 type AppPhase = 'intro' | 'title' | 'playing' | 'gameover';
 
@@ -14,6 +15,7 @@ export default function App() {
   const [gameKey, setGameKey] = useState(0);
 
   const handleStart = useCallback(() => {
+    soundManager.unlock();
     setAppPhase('playing');
   }, []);
 
@@ -26,6 +28,7 @@ export default function App() {
   }, [hiScore, setHiScoreState]);
 
   const handleRestart = useCallback(() => {
+    soundManager.unlock();
     setGameKey(k => k + 1);
     setAppPhase('playing');
   }, []);
@@ -39,7 +42,7 @@ export default function App() {
   return (
     <div className="app-root">
       {appPhase === 'intro' && (
-        <IntroScreen onDismiss={() => setAppPhase('title')} />
+        <IntroScreen onDismiss={() => { soundManager.unlock(); setAppPhase('title'); }} />
       )}
 
       {appPhase === 'title' && (

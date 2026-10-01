@@ -2,28 +2,41 @@
  * Web Audio API sound manager.
  * Each play() call spawns a new AudioBufferSourceNode so multiple
  * overlapping plays of the same sound blend naturally.
+ *
+ * iOS (and Chrome on iOS) require AudioContext to be created inside a
+ * user-gesture handler. Call unlock() from the first tap/click before
+ * any play() is expected; loads that arrive before unlock are queued and
+ * decoded once the context exists.
  */
 class SoundManager {
   private ctx: AudioContext | null = null;
   private buffers = new Map<string, AudioBuffer>();
+  private pending = new Map<string, ArrayBuffer>();
 
-  private getCtx(): AudioContext {
+  unlock(): void {
     if (!this.ctx) {
       this.ctx = new AudioContext();
+    } else if (this.ctx.state === 'suspended') {
+      void this.ctx.resume();
     }
-    if (this.ctx.state === 'suspended') {
-      this.ctx.resume();
+    for (const [id, raw] of this.pending) {
+      void this.ctx.decodeAudioData(raw)
+        .then(buf => this.buffers.set(id, buf))
+        .catch(() => {});
     }
-    return this.ctx;
+    this.pending.clear();
   }
 
   async load(id: string, url: string): Promise<void> {
     try {
-      const ctx = this.getCtx();
       const response = await fetch(url);
-      const arrayBuffer = await response.arrayBuffer();
-      const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
-      this.buffers.set(id, audioBuffer);
+      const raw = await response.arrayBuffer();
+      if (this.ctx) {
+        const buf = await this.ctx.decodeAudioData(raw);
+        this.buffers.set(id, buf);
+      } else {
+        this.pending.set(id, raw);
+      }
     } catch {
       // Sound loading is non-critical — silently ignore errors
     }
@@ -31,15 +44,15 @@ class SoundManager {
 
   play(id: string, volume = 1): void {
     const buffer = this.buffers.get(id);
-    if (!buffer) return;
+    if (!buffer || !this.ctx) return;
     try {
-      const ctx = this.getCtx();
-      const source = ctx.createBufferSource();
+      if (this.ctx.state === 'suspended') void this.ctx.resume();
+      const source = this.ctx.createBufferSource();
       source.buffer = buffer;
-      const gain = ctx.createGain();
+      const gain = this.ctx.createGain();
       gain.gain.value = volume;
       source.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(this.ctx.destination);
       source.start();
     } catch {
       // Playback errors are non-critical
