@@ -11,6 +11,7 @@ import { drawBonusItems, drawVictoryFlash, drawLevelText, drawJouleOnlineText } 
 import { useGameInput } from '../hooks/useGameInput';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { HUD } from './HUD';
+import { MobileDPad } from './MobileDPad';
 import { PauseScreen } from './PauseScreen';
 import { TIMING } from '../game/engine/timing';
 
@@ -126,7 +127,7 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
     ]).then(() => soundManager.play('level-start'));
   }, []);
 
-  const { consumeDirection, consumePause } = useGameInput();
+  const { consumeDirection, consumePause, queueDirection } = useGameInput();
   const [phase, setPhase] = useState<GamePhase>(GamePhase.LevelIntro);
 
   const update = useCallback((deltaMs: number, now: number) => {
@@ -336,6 +337,7 @@ const render = useCallback(() => {
         lives={state.player.lives}
         showControls={!hasMoved}
       />
+      <MobileDPad onDirection={queueDirection} />
       {phase === GamePhase.Paused && <PauseScreen />}
     </div>
   );
