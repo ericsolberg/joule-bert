@@ -38,39 +38,41 @@ export function drawEnemy(
 
   switch (enemy.type) {
     case EnemyType.Hallucinator:
-      drawHallucinator(ctx, pos.x, pos.y, hallucinatorImage);
+      drawHallucinator(ctx, pos.x, pos.y, hallucinatorImage, tileW);
       break;
     case EnemyType.DataSilo:
-      drawDataSilo(ctx, pos.x, pos.y, datasiloImage);
+      drawDataSilo(ctx, pos.x, pos.y, datasiloImage, tileW);
       break;
     case EnemyType.ComplianceTroll:
-      drawComplianceTroll(ctx, pos.x, pos.y, complianceTrollImage);
+      drawComplianceTroll(ctx, pos.x, pos.y, complianceTrollImage, tileW);
       break;
     case EnemyType.LegacyGoblin:
-      drawLegacyGoblin(ctx, pos.x, pos.y, legacyGoblinImage);
+      drawLegacyGoblin(ctx, pos.x, pos.y, legacyGoblinImage, tileW);
       break;
     case EnemyType.ContextGremlin:
-      drawContextGremlin(ctx, pos.x, pos.y, contextGremlinImage);
+      drawContextGremlin(ctx, pos.x, pos.y, contextGremlinImage, tileW);
       break;
   }
 
   if (enemy.introHops < 3) {
-    drawEnemyNameLabel(ctx, pos.x, pos.y, ENEMY_NAMES[enemy.type]);
+    drawEnemyNameLabel(ctx, pos.x, pos.y, ENEMY_NAMES[enemy.type], tileW);
   }
 }
 
-function drawEnemyNameLabel(ctx: CanvasRenderingContext2D, cx: number, cy: number, name: string) {
+function drawEnemyNameLabel(ctx: CanvasRenderingContext2D, cx: number, cy: number, name: string, tileW = 200) {
+  const fontSize = Math.max(10, Math.round(tileW * 0.085));
+  const labelOffset = Math.round(tileW * 0.395);
   ctx.save();
-  ctx.font = 'bold 17px "Comic Sans MS", cursive';
+  ctx.font = `bold ${fontSize}px "Comic Sans MS", cursive`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'bottom';
 
   const metrics = ctx.measureText(name);
   const padX = 6, padY = 4;
   const boxW = metrics.width + padX * 2;
-  const boxH = 21 + padY * 2;
+  const boxH = fontSize + padY * 2;
   const boxX = cx - boxW / 2;
-  const boxY = cy - 79 - boxH;
+  const boxY = cy - labelOffset - boxH;
 
   ctx.fillStyle = 'rgba(10,10,30,0.75)';
   ctx.beginPath();
@@ -78,7 +80,7 @@ function drawEnemyNameLabel(ctx: CanvasRenderingContext2D, cx: number, cy: numbe
   ctx.fill();
 
   ctx.fillStyle = 'rgba(255,255,255,0.92)';
-  ctx.fillText(name, cx, cy - 79);
+  ctx.fillText(name, cx, cy - labelOffset);
   ctx.restore();
 }
 
@@ -105,10 +107,10 @@ function getEnemyScreenPos(
   return { x: pos.x, y: pos.y + tileH / 2 };
 }
 
-function drawHallucinator(ctx: CanvasRenderingContext2D, cx: number, cy: number, image: HTMLImageElement | null) {
-  const size = 75;
+function drawHallucinator(ctx: CanvasRenderingContext2D, cx: number, cy: number, image: HTMLImageElement | null, tileW = 200) {
+  const size = Math.max(15, Math.round(tileW * 0.375));
   if (image) {
-    ctx.drawImage(image, cx - size / 2, cy - size + 15, size, size);
+    ctx.drawImage(image, cx - size / 2, cy - size + Math.round(size * 0.2), size, size);
   } else {
     // Fallback: simple circle
     ctx.save();
@@ -120,10 +122,10 @@ function drawHallucinator(ctx: CanvasRenderingContext2D, cx: number, cy: number,
   }
 }
 
-function drawDataSilo(ctx: CanvasRenderingContext2D, cx: number, cy: number, image: HTMLImageElement | null) {
-  const size = 75;
+function drawDataSilo(ctx: CanvasRenderingContext2D, cx: number, cy: number, image: HTMLImageElement | null, tileW = 200) {
+  const size = Math.max(15, Math.round(tileW * 0.375));
   if (image) {
-    ctx.drawImage(image, cx - size / 2, cy - size + 15, size, size);
+    ctx.drawImage(image, cx - size / 2, cy - size + Math.round(size * 0.2), size, size);
   } else {
     ctx.save();
     ctx.fillStyle = '#475569';
@@ -132,10 +134,10 @@ function drawDataSilo(ctx: CanvasRenderingContext2D, cx: number, cy: number, ima
   }
 }
 
-function drawComplianceTroll(ctx: CanvasRenderingContext2D, cx: number, cy: number, image: HTMLImageElement | null) {
-  const size = 75;
+function drawComplianceTroll(ctx: CanvasRenderingContext2D, cx: number, cy: number, image: HTMLImageElement | null, tileW = 200) {
+  const size = Math.max(15, Math.round(tileW * 0.375));
   if (image) {
-    ctx.drawImage(image, cx - size / 2, cy - size + 15, size, size);
+    ctx.drawImage(image, cx - size / 2, cy - size + Math.round(size * 0.2), size, size);
   } else {
     ctx.save();
     ctx.fillStyle = '#1E3A5F';
@@ -144,10 +146,10 @@ function drawComplianceTroll(ctx: CanvasRenderingContext2D, cx: number, cy: numb
   }
 }
 
-function drawLegacyGoblin(ctx: CanvasRenderingContext2D, cx: number, cy: number, image: HTMLImageElement | null) {
-  const size = 75;
+function drawLegacyGoblin(ctx: CanvasRenderingContext2D, cx: number, cy: number, image: HTMLImageElement | null, tileW = 200) {
+  const size = Math.max(15, Math.round(tileW * 0.375));
   if (image) {
-    ctx.drawImage(image, cx - size / 2, cy - size + 15, size, size);
+    ctx.drawImage(image, cx - size / 2, cy - size + Math.round(size * 0.2), size, size);
   } else {
     ctx.save();
     ctx.beginPath();
@@ -158,10 +160,10 @@ function drawLegacyGoblin(ctx: CanvasRenderingContext2D, cx: number, cy: number,
   }
 }
 
-function drawContextGremlin(ctx: CanvasRenderingContext2D, cx: number, cy: number, image: HTMLImageElement | null) {
-  const size = 75;
+function drawContextGremlin(ctx: CanvasRenderingContext2D, cx: number, cy: number, image: HTMLImageElement | null, tileW = 200) {
+  const size = Math.max(15, Math.round(tileW * 0.375));
   if (image) {
-    ctx.drawImage(image, cx - size / 2, cy - size + 15, size, size);
+    ctx.drawImage(image, cx - size / 2, cy - size + Math.round(size * 0.2), size, size);
   } else {
     ctx.save();
     ctx.beginPath();
@@ -209,11 +211,11 @@ function drawEnemyFall(
 
   // Draw the actual enemy character at (0, 0) within the translated context
   switch (enemy.type) {
-    case EnemyType.Hallucinator:   drawHallucinator(ctx, 0, 0, hallucinatorImage); break;
-    case EnemyType.DataSilo:       drawDataSilo(ctx, 0, 0, datasiloImage); break;
-    case EnemyType.ComplianceTroll: drawComplianceTroll(ctx, 0, 0, complianceTrollImage); break;
-    case EnemyType.LegacyGoblin:   drawLegacyGoblin(ctx, 0, 0, legacyGoblinImage); break;
-    case EnemyType.ContextGremlin: drawContextGremlin(ctx, 0, 0, contextGremlinImage); break;
+    case EnemyType.Hallucinator:   drawHallucinator(ctx, 0, 0, hallucinatorImage, tileW); break;
+    case EnemyType.DataSilo:       drawDataSilo(ctx, 0, 0, datasiloImage, tileW); break;
+    case EnemyType.ComplianceTroll: drawComplianceTroll(ctx, 0, 0, complianceTrollImage, tileW); break;
+    case EnemyType.LegacyGoblin:   drawLegacyGoblin(ctx, 0, 0, legacyGoblinImage, tileW); break;
+    case EnemyType.ContextGremlin: drawContextGremlin(ctx, 0, 0, contextGremlinImage, tileW); break;
     default: {
       ctx.beginPath();
       ctx.ellipse(0, 0, 12, 8, 0, 0, Math.PI * 2);

@@ -254,10 +254,11 @@ export function drawEscapeNode(
   animProgress: number,
   respawnAt: number | null,
   now: number,
-  image: HTMLImageElement | null = null
+  image: HTMLImageElement | null = null,
+  tileW = 200
 ) {
-  const imgW = 75;
-  const imgH = 18;
+  const imgW = Math.max(30, Math.round(tileW * 0.375));
+  const imgH = Math.max(6, Math.round(tileW * 0.09));
 
   let alpha = active ? 1 : 0.35;
   if (animating) alpha = 1 - animProgress;

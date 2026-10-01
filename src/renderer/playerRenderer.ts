@@ -10,10 +10,13 @@ export function drawPlayer(
   screenY: number,
   now: number,
   reduceMotion: boolean,
-  jouleImage: HTMLImageElement | null = null
+  jouleImage: HTMLImageElement | null = null,
+  tileW = 200
 ) {
+  const gemSize = Math.max(6, Math.round(tileW * 0.09));
+
   if (player.animState === 'dead') {
-    drawDeathAnim(ctx, player, screenX, screenY, jouleImage);
+    drawDeathAnim(ctx, player, screenX, screenY, jouleImage, gemSize);
     return;
   }
 
@@ -25,21 +28,20 @@ export function drawPlayer(
 
   if (player.animState === 'victory') {
     ctx.save();
-    ctx.translate(screenX, drawY - 18);
+    ctx.translate(screenX, drawY - gemSize);
     const spin = player.victoryProgress * Math.PI * 2;
     const scale = 1 + 0.2 * Math.sin(player.victoryProgress * Math.PI * 3);
     ctx.rotate(spin);
     ctx.scale(scale, scale);
-    drawGem(ctx, 0, 0, jouleImage);
+    drawGem(ctx, 0, 0, jouleImage, gemSize);
     ctx.restore();
     return;
   }
 
-  drawGem(ctx, screenX, drawY - 18, jouleImage);
+  drawGem(ctx, screenX, drawY - gemSize, jouleImage, gemSize);
 }
 
-function drawGem(ctx: CanvasRenderingContext2D, cx: number, cy: number, jouleImage: HTMLImageElement | null = null) {
-  const size = 18;
+function drawGem(ctx: CanvasRenderingContext2D, cx: number, cy: number, jouleImage: HTMLImageElement | null = null, size = 18) {
 
   if (jouleImage && jouleImage.complete && jouleImage.naturalWidth > 0) {
     const imgH = size * 4.0;
@@ -120,7 +122,8 @@ function drawDeathAnim(
   player: PlayerState,
   cx: number,
   cy: number,
-  jouleImage: HTMLImageElement | null
+  jouleImage: HTMLImageElement | null,
+  size = 18
 ) {
   const p = player.deathProgress;
   if (p >= 1) return;
@@ -134,9 +137,9 @@ function drawDeathAnim(
 
   ctx.save();
   ctx.globalAlpha = Math.max(0, alpha);
-  ctx.translate(cx, fallY - 18);
+  ctx.translate(cx, fallY - size);
   ctx.rotate(tumble);
-  drawGem(ctx, 0, 0, jouleImage);
+  drawGem(ctx, 0, 0, jouleImage, size);
   ctx.restore();
 }
 

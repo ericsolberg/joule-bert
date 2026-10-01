@@ -17,13 +17,22 @@ import { TIMING } from '../game/engine/timing';
 const MAX_TILE_W = 200;
 const MARGIN = 80; // horizontal padding so tiles don't touch the edge
 const TILE_GAP = 10; // pixels of space between adjacent tiles
+const HUD_HEIGHT = 80; // matches the hardcoded value in computeOrigin (boardModel.ts)
 
-/** Compute responsive tile dimensions from canvas width and board row count. */
-function computeTileDims(canvasW: number, numRows: number) {
-  const responsiveW = Math.floor((canvasW - MARGIN) * 2 / numRows);
-  const tileW = Math.min(MAX_TILE_W, Math.max(40, responsiveW));
-  const tileH = Math.round(tileW / 2);                          // 2:1 isometric diamond
-  const tileD = Math.round(tileW * SVG_H_OVER_W - tileH);      // depth from SVG aspect ratio
+/** Compute responsive tile dimensions that fit within both canvas width and height. */
+function computeTileDims(canvasW: number, canvasH: number, numRows: number) {
+  // Width: pyramid base = numRows*tileW + (numRows-1)*gap must fit in canvasW - MARGIN
+  const tileWFromWidth = Math.floor((canvasW - MARGIN - (numRows - 1) * TILE_GAP) / numRows);
+
+  // Height: pyramidH = tileW*((numRows-1)*(SVG_H_OVER_W-0.25) + SVG_H_OVER_W) + (numRows-1)*gap
+  // must fit in the space below the HUD, with a small vertical margin
+  const availableH = canvasH - HUD_HEIGHT - 40;
+  const hCoeff = (numRows - 1) * (SVG_H_OVER_W - 0.25) + SVG_H_OVER_W;
+  const tileWFromHeight = Math.floor((availableH - (numRows - 1) * TILE_GAP) / hCoeff);
+
+  const tileW = Math.min(MAX_TILE_W, Math.max(30, Math.min(tileWFromWidth, tileWFromHeight)));
+  const tileH = Math.round(tileW / 2);
+  const tileD = Math.round(tileW * SVG_H_OVER_W - tileH);
   return { tileW, tileH, tileD };
 }
 
@@ -208,8 +217,11 @@ const render = useCallback(() => {
     ctx.fillRect(0, 0, w, h);
 
     // Responsive tile dimensions — recomputed every frame so resize is instant
-    const { tileW, tileH, tileD } = computeTileDims(w, state.board.rows);
+    const { tileW, tileH, tileD } = computeTileDims(w, h, state.board.rows);
     const { originX, originY } = computeOrigin(state.board.rows, w, h, tileW, tileH, tileD, TILE_GAP);
+    // Escape node offset constants, proportional to tile size (designed at tileW=200: 50px, 80px)
+    const escapeOffsetX = Math.round(tileW * 0.25);
+    const escapeOffsetY = Math.round(tileW * 0.4);
     const now = performance.now();
     const tileImage = tileImageRef.current;
 
@@ -230,11 +242,11 @@ const render = useCallback(() => {
       let nx: number, ny: number;
 
       if (node.side === 'left') {
-        nx = base.x - tileW - 50;
-        ny = base.y + tileH / 2 + 80;
+        nx = base.x - tileW - escapeOffsetX;
+        ny = base.y + tileH / 2 + escapeOffsetY;
       } else {
-        nx = base.x + tileW + 50;
-        ny = base.y + tileH / 2 + 80;
+        nx = base.x + tileW + escapeOffsetX;
+        ny = base.y + tileH / 2 + escapeOffsetY;
       }
 
       if (node.animating) {
@@ -250,7 +262,7 @@ const render = useCallback(() => {
         ny = by;
       }
 
-      drawEscapeNode(ctx, nx, ny, node.active, node.animating, node.animProgress, node.respawnAt, now, escapeNodeImageRef.current);
+      drawEscapeNode(ctx, nx, ny, node.active, node.animating, node.animProgress, node.respawnAt, now, escapeNodeImageRef.current, tileW);
     }
 
     drawBonusItems(ctx, state.bonusItems, originX, originY, now, tileW, tileH, tileD, TILE_GAP);
@@ -266,8 +278,8 @@ const render = useCallback(() => {
         const node = state.escapeNodes[state.player.escapingNodeIdx];
         const anchorCol = node.side === 'left' ? 0 : node.anchorRow;
         const nodeBase = tileToScreen(node.anchorRow, anchorCol, originX, originY, tileW, tileH, tileD, TILE_GAP);
-        const startX = node.side === 'left' ? nodeBase.x - tileW - 50 : nodeBase.x + tileW + 50;
-        const startY = nodeBase.y + tileH / 2 + 80;
+        const startX = node.side === 'left' ? nodeBase.x - tileW - escapeOffsetX : nodeBase.x + tileW + escapeOffsetX;
+        const startY = nodeBase.y + tileH / 2 + escapeOffsetY;
         const topPos = tileToScreen(0, 0, originX, originY, tileW, tileH, tileD, TILE_GAP);
         const endX = topPos.x;
         const endY = topPos.y + tileH / 2;
@@ -279,7 +291,7 @@ const render = useCallback(() => {
         playerPos = { x: bx, y: by };
       }
 
-      drawPlayer(ctx, state.player, playerPos.x, playerPos.y, now, reduceMotion, jouleImageRef.current);
+      drawPlayer(ctx, state.player, playerPos.x, playerPos.y, now, reduceMotion, jouleImageRef.current, tileW);
     }
 
     if (state.phase === GamePhase.LevelClear) {
