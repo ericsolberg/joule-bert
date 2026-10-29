@@ -12,6 +12,7 @@ import { useGameInput } from '../hooks/useGameInput';
 import { useGameLoop } from '../hooks/useGameLoop';
 import { HUD } from './HUD';
 import { PauseScreen } from './PauseScreen';
+import { MobileDPad } from './MobileDPad';
 import { TIMING } from '../game/engine/timing';
 
 const MAX_TILE_W = 200;
@@ -126,7 +127,7 @@ export function GameCanvas({ hiScore, onHiScoreUpdate, onGameOver }: GameCanvasP
     ]).then(() => soundManager.play('level-start'));
   }, []);
 
-  const { consumeDirection, consumePause } = useGameInput();
+  const { consumeDirection, consumePause, queueDirection } = useGameInput();
   const [phase, setPhase] = useState<GamePhase>(GamePhase.LevelIntro);
 
   const update = useCallback((deltaMs: number, now: number) => {
@@ -337,6 +338,7 @@ const render = useCallback(() => {
         showControls={!hasMoved}
       />
       {phase === GamePhase.Paused && <PauseScreen />}
+      <MobileDPad onDirection={queueDirection} />
     </div>
   );
 }

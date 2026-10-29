@@ -15,6 +15,7 @@ const KEY_DIRECTION_MAP: Record<string, Direction> = {
 interface GameInput {
   consumeDirection: () => Direction | null;
   consumePause: () => boolean;
+  queueDirection: (dir: Direction) => void;
 }
 
 export function useGameInput(): GameInput {
@@ -52,5 +53,9 @@ export function useGameInput(): GameInput {
     return p;
   }, []);
 
-  return { consumeDirection, consumePause };
+  const queueDirection = useCallback((dir: Direction) => {
+    directionQueue.current = dir;
+  }, []);
+
+  return { consumeDirection, consumePause, queueDirection };
 }

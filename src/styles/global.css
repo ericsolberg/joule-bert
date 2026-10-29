@@ -38,3 +38,55 @@ body {
   align-items: center;
   justify-content: center;
 }
+
+/* Mobile D-pad overlay */
+.dpad-container {
+  position: fixed;
+  z-index: 100;
+  pointer-events: none;
+}
+
+@media (orientation: portrait) {
+  .dpad-container {
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+@media (orientation: landscape) {
+  .dpad-container {
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+}
+
+.dpad-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  pointer-events: auto;
+}
+
+.dpad-btn {
+  width: 64px;
+  height: 64px;
+  font-size: 1.8rem;
+  line-height: 1;
+  background: rgba(167, 139, 250, 0.15);
+  border: 2px solid rgba(167, 139, 250, 0.45);
+  border-radius: 10px;
+  color: var(--joule-text);
+  cursor: pointer;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.dpad-btn:active {
+  background: rgba(167, 139, 250, 0.45);
+}
