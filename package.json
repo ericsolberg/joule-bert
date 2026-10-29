@@ -14,6 +14,9 @@
     "kyma:update": "kubectl -n joule-bert set image deployment/joule-bert joule-bert=ericsolberg/joule-bert:$npm_package_version && kubectl -n joule-bert rollout status deployment/joule-bert",
     "deploy": "npm run docker:build && npm run docker:push && npm run kyma:update"
   },
+  "engines": {
+    "node": ">=22.23.4"
+  },
   "dependencies": {
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
